@@ -255,6 +255,11 @@
       <div class="levels small" id="partsSel"></div>
     </div>
 
+    <div id="catchOpt" style="display:none">
+      <p class="levellabel">いし（さわらない もの）を まぜる？</p>
+      <div class="levels small" id="rockSel"></div>
+    </div>
+
     <p class="levellabel">むずかしさ を えらんでね</p>
     <div class="levels" id="levels"></div>
     <p class="levelnote" id="levelNote"></p>
@@ -382,8 +387,9 @@ const CONFIG = {
   camCDN  : 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js',
   defaults: {
     vol:80, bpm:100, waitBeats:8, tol:1.3, level:'normal', rounds:10,
-    mode:'mimic',          // 'mimic'=まねっこ / 'touch'=タッチ
+    mode:'mimic',          // 'mimic'=まねっこ / 'touch'=タッチ / 'catch'=キャッチ
     touchParts:'hand',     // 'hand'=てだけ / 'both'=てと あし
+    catchRock:false,       // キャッチ：さわらない もの（いし）を まぜるか
     voice:true, guide:true, skeleton:true,
     poses:null            // null のときは EASY_POSES を つかう
   }
@@ -394,13 +400,18 @@ const LEVELS = {
            tol:1.7, waitBeats:12, hold:2, bpm:88,
            // タッチモード：まと の おおきさ(からだ比)・せいげん時間・どうじに でる数・
            //               とどく きょり(からだ比)・とまって いる フレーム数
-           tR:0.55, tSec:8.0, tN:1, tReach:[0.80,1.15], tHold:2 },
+           tR:0.55, tSec:8.0, tN:1, tReach:[0.80,1.15], tHold:2,
+           // キャッチモード：おちる はやさ(秒/画面)・とれる はんい(からだ比)・
+           //                 つぎが でる かんかく(秒)・どうじに おちる 数
+           cFall:5.0, cR:0.60, cGap:2.6, cMax:1 },
   normal:{ label:'🙂 ふつう',     note:'ちょうど いい バランス',
            tol:1.3, waitBeats:8,  hold:3, bpm:100,
-           tR:0.40, tSec:5.5, tN:1, tReach:[0.95,1.35], tHold:3 },
+           tR:0.40, tSec:5.5, tN:1, tReach:[0.95,1.35], tHold:3,
+           cFall:3.5, cR:0.44, cGap:1.9, cMax:2 },
   hard  :{ label:'💪 むずかしい', note:'きちんと ポーズ ／ テンポ はやめ',
            tol:1.0, waitBeats:5,  hold:5, bpm:116,
-           tR:0.30, tSec:3.8, tN:2, tReach:[1.05,1.45], tHold:4 }
+           tR:0.30, tSec:3.8, tN:2, tReach:[1.05,1.45], tHold:4,
+           cFall:2.6, cR:0.33, cGap:1.3, cMax:3 }
 };
 // タッチモード の まと（て／あし）
 const TOUCH_KINDS = {
@@ -1489,12 +1500,13 @@ function startRound(){
 }
 
 function onBeat(gb, tAudio){
-  // タッチモード は じかん で すすむ ので、ここでは リズム だけ ならす
-  if(SET.mode==='touch'){
+  // タッチ／キャッチ は じかん で すすむ ので、ここでは リズム だけ ならす
+  if(SET.mode==='touch' || SET.mode==='catch'){
     SFX.hat(tAudio);
     if(gb%2===0) SFX.kick(tAudio);
     // のこり じかん が すくない ときは カッカッ と せかす（きこえ の よこく）
-    if(T.targets.length && (T.limit-(now()-T.start)) < 1.8) SFX.count(tAudio, gb);
+    if(SET.mode==='touch' && T.targets.length
+       && (T.limit-(now()-T.start)) < 1.8) SFX.count(tAudio, gb);
     return;
   }
   const R = roundLen(), rb = gb % R, ph = phaseOf(rb);
@@ -1785,6 +1797,149 @@ function drawTargets(){
     ctx.font = `${tg.r*1.05}px ${getComputedStyle(document.body).fontFamily}`;
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText(tg.done ? '⭕' : K.emoji, tg.x, tg.y + tg.r*0.06);
+    ctx.restore();
+  }
+}
+
+/* =========================================================================
+   9.6 キャッチモード（おちてくる フルーツ を てで とる）
+   ------------------------------------------------------------------------
+   フルーツ は「その子 の てが とどく はば」の なか にしか おちて こない ので、
+   むりに はしらなくても とれます。おおきさ も からだ に あわせて かわります。
+   ========================================================================= */
+const FRUITS = ['🍎','🍊','🍇','🍓','🍌','🍑','🍉','🍐','🍒','🥝','🍍','🥕'];
+const C = { items:[], spawned:0, done:0, nextAt:0 };
+
+function catchLevel(){ return LEVELS[SET.level] || LEVELS.normal; }
+
+// てが とどく よこはば（からだ が みえない ときは がめん はば）
+function catchBand(){
+  const b=G.body;
+  if(!b) return { cx:CW*0.5, half:CW*0.40, u:Math.min(CW,CH)*0.17 };
+  const u=b.unit;
+  return { cx:b.shMid.x, half:Math.min(u*1.55, CW*0.46), u };
+}
+
+function spawnFruit(isRock){
+  const L=catchLevel(), B=catchBand();
+  const r = clamp(B.u*0.30, Math.min(CW,CH)*0.045, Math.min(CW,CH)*0.105);
+  const x = clamp(B.cx + rnd(-B.half, B.half), r*1.2, CW-r*1.2);
+  C.items.push({
+    x, y:-r*1.4, r,
+    vy: CH / L.cFall,                      // がめん を わたる のに cFall びょう
+    emoji: isRock ? '🪨' : pick(FRUITS),
+    rock: !!isRock,
+    spin: rnd(-1.2,1.2), rot:0,
+    got:false, gone:false, pop:0
+  });
+  if(!isRock) C.spawned++;
+}
+
+function catchResolve(item, ok){
+  if(item.gone) return;
+  item.gone = true;
+  const t = ac ? ac.currentTime : 0;
+  if(item.rock){                                   // いし は てんすう に いれない
+    if(ok){ SFX.miss(t); bigText('あれれ！', '#cfe9ff'); G.mood='oops'; }
+    return;
+  }
+  C.done++;
+  G.log.push({ id:'catch_fruit', ok });
+  G.plays = C.done;
+  elRound.textContent = Math.min(C.done+1, SET.rounds)+' / '+SET.rounds;
+  if(ok){
+    G.stars++; G.combo++; elStar.textContent=G.stars;
+    (G.combo>=3 ? SFX.great : SFX.ok)(t);
+    burst(G.combo>=3 ? 40 : 24);
+    if(G.combo>=3) bigText(pick(PRAISE), '#fff3a8');
+    G.mood='happy';
+  }else{
+    G.combo=0; SFX.pop(t); sweep(300,140,t,0.22,'sine',0.14);
+    G.mood='oops';
+  }
+  if(C.done >= SET.rounds){ G.running=false; setTimeout(showSummary, 1000); }
+}
+
+function catchTick(dt){
+  if(!G.running || SET.mode!=='catch') return;
+  const t=now(), L=catchLevel();
+
+  // --- あたらしく おとす ---
+  const live = C.items.filter(i=>!i.gone).length;
+  if(C.spawned < SET.rounds && live < L.cMax && t >= C.nextAt){
+    spawnFruit(false);
+    C.nextAt = t + L.cGap*rnd(0.85,1.15);
+    // 「さわらない もの」を まぜる せってい の とき、ときどき いし も おとす
+    if(SET.catchRock && Math.random()<0.28 && live+1 < L.cMax+1) spawnFruit(true);
+  }
+
+  // --- うごかす ＆ とれたか みる ---
+  const hands = [];
+  if(G.judgeOn && G.body){
+    for(const i of [15,16]) if(G.body.vis(i)) hands.push(G.body.P[i]);
+  }
+  for(const it of C.items){
+    if(it.gone){ it.pop = Math.max(0, it.pop - dt*3); continue; }
+    it.y += it.vy*dt;
+    it.rot += it.spin*dt;
+    const grab = Math.max(it.r*1.15, catchBand().u * L.cR);
+    for(const h of hands){
+      if(Math.hypot(h.x-it.x, h.y-it.y) < grab){
+        it.got=true; it.pop=1; catchResolve(it, true); break;
+      }
+    }
+    if(!it.gone && it.y - it.r > CH){ catchResolve(it, false); }
+  }
+  // かたづけ
+  if(C.items.length>24) C.items = C.items.filter(i=>!i.gone || i.pop>0);
+}
+
+// タップ でも とれる（みるだけモード／ほじょ が ひつような とき）
+function catchTap(x,y){
+  if(!G.running || SET.mode!=='catch') return;
+  for(const it of C.items){
+    if(it.gone) continue;
+    if(Math.hypot(x-it.x, y-it.y) < Math.max(it.r*1.6, 34)){
+      it.got=true; it.pop=1; catchResolve(it, true); break;
+    }
+  }
+}
+
+function drawFruits(){
+  if(SET.mode!=='catch') return;
+  const ff = getComputedStyle(document.body).fontFamily;
+  // て の いち を わかりやすく ひからせる
+  if(G.judgeOn && G.body){
+    const u=G.body.unit, L=catchLevel();
+    const gr = Math.max(u*L.cR, Math.min(CW,CH)*0.05);
+    for(const i of [15,16]){
+      if(!G.body.vis(i)) continue;
+      const h=G.body.P[i];
+      ctx.save();
+      ctx.globalAlpha=0.30+0.12*Math.sin(now()*5);
+      ctx.fillStyle='#ffd93d';
+      ctx.beginPath(); ctx.arc(h.x,h.y,gr,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=0.95; ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(3,gr*0.10);
+      ctx.beginPath(); ctx.arc(h.x,h.y,gr,0,Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+  }
+  for(const it of C.items){
+    if(it.gone && it.pop<=0) continue;
+    ctx.save();
+    ctx.translate(it.x, it.y);
+    if(it.got){ const s=1+it.pop*0.8; ctx.scale(s,s); ctx.globalAlpha=Math.min(1,it.pop*1.3); }
+    else ctx.rotate(it.rot*0.25);
+    // うしろ の まる（せなか が しろい ふく でも みえる ように）
+    ctx.fillStyle = it.rock ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.62)';
+    ctx.strokeStyle = it.rock ? 'rgba(255,120,120,.95)' : 'rgba(255,255,255,.92)';
+    ctx.lineWidth = Math.max(3, it.r*0.14);
+    ctx.shadowColor='rgba(0,0,0,.25)'; ctx.shadowBlur=12; ctx.shadowOffsetY=4;
+    ctx.beginPath(); ctx.arc(0,0,it.r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.font=`${it.r*1.5}px ${ff}`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(it.emoji, 0, it.r*0.06);
     ctx.restore();
   }
 }
@@ -2422,7 +2577,9 @@ function frame(){
     fit = coverFit(video.videoWidth, video.videoHeight);
   }
   G.body = (lm && fit) ? buildBody(lm, fit) : null;
-  if(SET.mode==='touch') touchTick(); else judgeTick();
+  if(SET.mode==='touch') touchTick();
+  else if(SET.mode==='catch') catchTick(dt);
+  else judgeTick();
 
   // --- 描画 ---
   ctx.clearRect(0,0,CW,CH);
@@ -2443,9 +2600,9 @@ function frame(){
     G.pose.guide(ctx, G.body);
   }
 
-  // --- タッチモード：まと を えがいて、お手本の 人型 は ださない ---
-  if(SET.mode==='touch'){
-    drawTargets();
+  // --- タッチ／キャッチ：まと や フルーツ を えがいて、お手本の 人型 は ださない ---
+  if(SET.mode==='touch' || SET.mode==='catch'){
+    if(SET.mode==='touch') drawTargets(); else drawFruits();
     if(G.judgeOn && G.running && !G.body){
       ctx.save();
       ctx.fillStyle='rgba(0,0,0,.45)';
@@ -2569,11 +2726,18 @@ async function beginGame(withCamera){
   G.running = true; G.stars=0; G.combo=0; G.plays=0; G.log=[];
   G.mood='normal'; G.result=null; G.phase='ready';
   T.targets=[]; T.nextAt = now() + 1.2;          // タッチモード の まと を リセット
+  C.items=[]; C.spawned=0; C.done=0; C.nextAt = now() + 1.4;   // キャッチモード を リセット
   elStar.textContent='0';
   elRound.textContent = '1 / '+SET.rounds;
   // タッチモード は まと を タップ しても こたえられる（カメラなし の とき）
-  elDone.style.display = (lastWithCamera || SET.mode==='touch') ? 'none' : 'block';
-  if(SET.mode==='touch'){
+  elDone.style.display = (lastWithCamera || SET.mode!=='mimic') ? 'none' : 'block';
+  if(SET.mode==='catch'){
+    elPoseName.textContent='キャッチ';
+    elPoseChip.querySelector('.em').textContent='🍎';
+    elHint.textContent = lastWithCamera
+      ? 'おちてくる フルーツ を おてて で キャッチ！'
+      : 'おちてくる フルーツ を ゆびで タッチ して キャッチ！';
+  }else if(SET.mode==='touch'){
     elPoseName.textContent='よーい';
     elPoseChip.querySelector('.em').textContent='✋';
     elHint.textContent = lastWithCamera
@@ -2607,7 +2771,8 @@ function showSummary(){
   $('#rTally').innerHTML = G.log.map((r,i)=>{
     const tk = r.id.indexOf('touch_')===0 ? TOUCH_KINDS[r.id.slice(6)] : null;
     const p = POSES[r.id] || (tk ? {emoji:tk.emoji, name:tk.name+' タッチ'}
-                                 : {emoji:'❓', name:'？'});
+             : (r.id==='catch_fruit' ? {emoji:'🍎', name:'キャッチ'}
+                                     : {emoji:'❓', name:'？'}));
     return '<span class="'+(r.ok?'ok':'ng')+'">'+(i+1)+'. '+p.emoji+' '+p.name+
            ' '+(r.ok?'⭕':'—')+'</span>';
   }).join('');
@@ -2650,7 +2815,8 @@ $('#rSetBtn').addEventListener('click', ()=>{
 /* ---- スタートがめん：あそびかた・むずかしさ・かいすう ---- */
 const MODES = {
   mimic:{ label:'🐰 まねっこ', sub:'おてほんを みて、リズムに あわせて<br>おなじ ポーズを してみよう！' },
-  touch:{ label:'✋ タッチ',   sub:'でてきた まと に、て や あし を<br>のばして タッチ しよう！' }
+  touch:{ label:'✋ タッチ',   sub:'でてきた まと に、て や あし を<br>のばして タッチ しよう！' },
+  catch:{ label:'🍎 キャッチ', sub:'おちてくる フルーツ を<br>おてて で キャッチ しよう！' }
 };
 const PARTS = { hand:'✋ てだけ', both:'✋🦶 てと あし' };
 const elModes=$('#modeSel'), elParts=$('#partsSel');
@@ -2665,6 +2831,13 @@ Object.keys(PARTS).forEach(k=>{
   b.textContent=PARTS[k]; b.dataset.p=k;
   b.addEventListener('click',()=>{ SET.touchParts=k; saveSet(); paintLevels(); });
   elParts.appendChild(b);
+});
+const elRock=$('#rockSel');
+[['no','🍎 フルーツ だけ',false],['yes','🍎🪨 いし も まぜる',true]].forEach(([k,lab,v])=>{
+  const b=document.createElement('button');
+  b.textContent=lab; b.dataset.r=k;
+  b.addEventListener('click',()=>{ SET.catchRock=v; saveSet(); paintLevels(); });
+  elRock.appendChild(b);
 });
 const elLevels=$('#levels'), elRounds=$('#roundsSel');
 Object.keys(LEVELS).forEach(k=>{
@@ -2684,12 +2857,22 @@ function paintLevels(){
   [...elRounds.children].forEach(b=> b.classList.toggle('on', +b.dataset.n===SET.rounds));
   [...elModes.children].forEach(b=> b.classList.toggle('on', b.dataset.m===SET.mode));
   [...elParts.children].forEach(b=> b.classList.toggle('on', b.dataset.p===SET.touchParts));
+  [...elRock.children].forEach(b=> b.classList.toggle('on',
+      (b.dataset.r==='yes') === !!SET.catchRock));
   $('#touchOpt').style.display = (SET.mode==='touch') ? '' : 'none';
+  $('#catchOpt').style.display = (SET.mode==='catch') ? '' : 'none';
   $('#startSub').innerHTML = (MODES[SET.mode]||MODES.mimic).sub;
   const L=LEVELS[SET.level];
-  if(L) $('#levelNote').textContent = (SET.mode==='touch')
-    ? L.note.split('／')[0].trim()+' ／ まと '+(L.tN>1?'2こ':'1こ')+'・'+L.tSec+'びょう'
-    : L.note;
+  if(!L) return;
+  if(SET.mode==='touch'){
+    $('#levelNote').textContent =
+      L.note.split('／')[0].trim()+' ／ まと '+(L.tN>1?'2こ':'1こ')+'・'+L.tSec+'びょう';
+  }else if(SET.mode==='catch'){
+    const sp = L.cFall>=4.5?'ゆっくり おちる' : L.cFall>=3?'ふつうの はやさ' : 'はやく おちる';
+    $('#levelNote').textContent = sp+' ／ どうじに '+L.cMax+'こ まで';
+  }else{
+    $('#levelNote').textContent = L.note;
+  }
 }
 paintLevels();
 
@@ -2706,14 +2889,18 @@ $('#watchBtn').addEventListener('click', ()=>{
 elDone.addEventListener('click', ()=>{ if(G.phase==='resp'&&!G.result) finishRound(true); });
 // タッチモード：まと を ゆび で さわっても こたえられる
 cv.addEventListener('pointerdown', e=>{
-  if(SET.mode!=='touch' || !G.running) return;
+  if(!G.running) return;
   const r = cv.getBoundingClientRect();
-  touchTap(e.clientX - r.left, e.clientY - r.top);
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  if(SET.mode==='touch') touchTap(x,y);
+  else if(SET.mode==='catch') catchTap(x,y);
 });
 window.addEventListener('keydown', e=>{
   if(e.code==='Space'){ e.preventDefault();
     if(!G.running) return;
     if(SET.mode==='touch'){ if(T.targets.length) touchFinish(true); return; }
+    if(SET.mode==='catch'){ const it=C.items.find(i=>!i.gone);
+                            if(it){ it.got=true; it.pop=1; catchResolve(it,true); } return; }
     if(G.phase==='resp'&&!G.result) finishRound(true); }
   if(e.key==='s'||e.key==='S'){ toggleSettings(); }
 });

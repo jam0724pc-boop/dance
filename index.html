@@ -244,9 +244,17 @@
 <div class="screen" id="startScreen">
   <div class="faces">🐰 ✈️ 👏 🦩</div>
   <h1>リズム まねっこ</h1>
-  <p class="sub">おてほんを みて、リズムに あわせて<br>おなじ ポーズを してみよう！</p>
+  <p class="sub" id="startSub">おてほんを みて、リズムに あわせて<br>おなじ ポーズを してみよう！</p>
 
   <div class="levelbox">
+    <p class="levellabel">あそびかた を えらんでね</p>
+    <div class="levels" id="modeSel"></div>
+
+    <div id="touchOpt" style="display:none">
+      <p class="levellabel">どこを つかう？</p>
+      <div class="levels small" id="partsSel"></div>
+    </div>
+
     <p class="levellabel">むずかしさ を えらんでね</p>
     <div class="levels" id="levels"></div>
     <p class="levelnote" id="levelNote"></p>
@@ -374,6 +382,8 @@ const CONFIG = {
   camCDN  : 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js',
   defaults: {
     vol:80, bpm:100, waitBeats:8, tol:1.3, level:'normal', rounds:10,
+    mode:'mimic',          // 'mimic'=まねっこ / 'touch'=タッチ
+    touchParts:'hand',     // 'hand'=てだけ / 'both'=てと あし
     voice:true, guide:true, skeleton:true,
     poses:null            // null のときは EASY_POSES を つかう
   }
@@ -381,11 +391,21 @@ const CONFIG = {
 // むずかしさ 3だんかい（はんていの ゆるさ・まつ じかん・キープ時間 をまとめて かえる）
 const LEVELS = {
   easy  :{ label:'😊 やさしい',   note:'ざっくり はんてい ／ ゆっくり まつ',
-           tol:1.7, waitBeats:12, hold:2, bpm:88  },
+           tol:1.7, waitBeats:12, hold:2, bpm:88,
+           // タッチモード：まと の おおきさ(からだ比)・せいげん時間・どうじに でる数・
+           //               とどく きょり(からだ比)・とまって いる フレーム数
+           tR:0.55, tSec:8.0, tN:1, tReach:[0.80,1.15], tHold:2 },
   normal:{ label:'🙂 ふつう',     note:'ちょうど いい バランス',
-           tol:1.3, waitBeats:8,  hold:3, bpm:100 },
+           tol:1.3, waitBeats:8,  hold:3, bpm:100,
+           tR:0.40, tSec:5.5, tN:1, tReach:[0.95,1.35], tHold:3 },
   hard  :{ label:'💪 むずかしい', note:'きちんと ポーズ ／ テンポ はやめ',
-           tol:1.0, waitBeats:5,  hold:5, bpm:116 }
+           tol:1.0, waitBeats:5,  hold:5, bpm:116,
+           tR:0.30, tSec:3.8, tN:2, tReach:[1.05,1.45], tHold:4 }
+};
+// タッチモード の まと（て／あし）
+const TOUCH_KINDS = {
+  hand:{ emoji:'✋', name:'て',  color:'#ff7aa2', say:'て！',   lm:[15,16] },
+  foot:{ emoji:'🦶', name:'あし', color:'#56b9ff', say:'あし！', lm:[27,28] }
 };
 const SAVE_KEY = 'rhythm-manekko-v3';
 let SET = Object.assign({}, CONFIG.defaults);
@@ -1327,7 +1347,7 @@ function toCanvas(l, fit){
 /* =========================================================================
    6. 体のデータづくり（判定用）
    ========================================================================= */
-const KEY = [0,7,8,11,12,13,14,15,16,23,24,25,26,27,28];
+const KEY = [0,7,8,11,12,13,14,15,16,23,24,25,26,27,28,31,32];
 let history = [];      // 静止判定用の履歴
 function buildBody(lm, fit){
   const P = {};
@@ -1469,6 +1489,14 @@ function startRound(){
 }
 
 function onBeat(gb, tAudio){
+  // タッチモード は じかん で すすむ ので、ここでは リズム だけ ならす
+  if(SET.mode==='touch'){
+    SFX.hat(tAudio);
+    if(gb%2===0) SFX.kick(tAudio);
+    // のこり じかん が すくない ときは カッカッ と せかす（きこえ の よこく）
+    if(T.targets.length && (T.limit-(now()-T.start)) < 1.8) SFX.count(tAudio, gb);
+    return;
+  }
   const R = roundLen(), rb = gb % R, ph = phaseOf(rb);
   G.phase = ph;
 
@@ -1565,6 +1593,200 @@ function finishRound(ok, tAudio){
     puff();
   }
   showResultText();
+}
+
+/* =========================================================================
+   9.5 タッチモード（まと に て／あし を のばす あそび）
+   ------------------------------------------------------------------------
+   まと は「その子の からだ の おおきさ」を ものさし に して おく ので、
+   カメラ から とおくても ちかくても、おなじ かんじ で とどきます。
+   ちいさい子・車いすの子 でも とどく はんい に しか でません。
+   ========================================================================= */
+const T = { targets:[], start:0, nextAt:0, limit:0, said:false };
+
+function touchLevel(){ return LEVELS[SET.level] || LEVELS.normal; }
+
+function touchKinds(){
+  return SET.touchParts==='both' ? ['hand','foot'] : ['hand'];
+}
+
+// まと を ひとつ つくる（からだ が みえて いれば からだ の まわり に）
+function makeTarget(kind, side, L){
+  const b=G.body;
+  const u = b ? b.unit : Math.min(CW,CH)*0.17;
+  const reach = u*rnd(L.tReach[0], L.tReach[1]);
+  // まと の おおきさ：からだ の おおきさ に あわせつつ、
+  // ちいさく なりすぎ／おおきく なりすぎ ない ように はばを もうける
+  let r = clamp(u*L.tR, Math.min(CW,CH)*0.055, Math.min(CW,CH)*0.20);
+  let x, y;
+
+  if(kind==='foot'){
+    // あし：いま の あしくび を きてん に、そと がわ ＋ すこし うえ へ。
+    // こし から はかると もともと あし が とどいて いる ので、
+    // 「いま の あし の いち」から うごかす きょり で かんがえる。
+    r *= 1.15;                                   // あし は すこし 大きめ の まと
+    const ankL = b && b.vis(27) ? b.P[27] : null;
+    const ankR = b && b.vis(28) ? b.P[28] : null;
+    let a = null;
+    if(ankL && ankR) a = (side<0) ? (ankL.x<ankR.x?ankL:ankR) : (ankL.x<ankR.x?ankR:ankL);
+    else if(b && b.hipMid) a = {x:b.hipMid.x + side*u*0.18, y:b.hipMid.y + u*1.45};
+    else a = {x:CW/2 + side*Math.min(CW,CH)*0.08, y:CH*0.82};
+    x = a.x + side*rnd(0.30,0.85)*reach;         // そと へ ふみだす
+    y = a.y - rnd(0.00,0.45)*reach;              // すこし もちあげる
+  }else{
+    // て：かた を きてん に、うえ ～ よこ ～ ななめした へ
+    let sh;
+    if(b) sh = (side<0) ? (b.shL.x<b.shR.x?b.shL:b.shR) : (b.shL.x<b.shR.x?b.shR:b.shL);
+    else  sh = {x:CW/2 + side*Math.min(CW,CH)*0.09, y:CH*0.42};
+    const a0 = side<0 ? Math.PI*0.80 : Math.PI*(-0.42);
+    const a1 = side<0 ? Math.PI*1.42 : Math.PI*0.20;
+    const ang = rnd(a0,a1);
+    x = sh.x + Math.cos(ang)*reach;
+    y = sh.y + Math.sin(ang)*reach;
+  }
+  // がめん から はみださない ように（うえは HUD、したは ヒント を よける）
+  const m = r*1.1;
+  x = clamp(x, m, CW-m);
+  y = clamp(y, m + CH*0.11, CH - m - CH*0.09);
+  return { kind, x, y, r, hold:0, done:false, born:now() };
+}
+
+function spawnTargets(){
+  const L = touchLevel();
+  const kinds = touchKinds();
+  const n = Math.min(L.tN, 2);
+  T.targets = [];
+  // 2つ でる ときは ひだり と みぎ に ひとつずつ（からだ が ねじれない ように）
+  const sides = n===2 ? [-1,1] : [pick([-1,1])];
+  for(let i=0;i<n;i++){
+    const kind = pick(kinds);
+    T.targets.push(makeTarget(kind, sides[i], L));
+  }
+  T.start = now();
+  T.limit = L.tSec;
+  T.said = false;
+  // まと が 2つ で しゅるい が ちがう ときは「て と あし」と だす
+  const ks = T.targets.map(t=>t.kind);
+  const same = ks.every(v=>v===ks[0]);
+  const k = TOUCH_KINDS[ks[0]];
+  const label = same ? (n===2 ? 'りょうほう '+k.name : k.name)
+                     : TOUCH_KINDS.hand.name+' と '+TOUCH_KINDS.foot.name;
+  const emoji = same ? k.emoji : TOUCH_KINDS.hand.emoji+TOUCH_KINDS.foot.emoji;
+  elPoseName.textContent = label+' タッチ';
+  elPoseChip.querySelector('.em').textContent = emoji;
+  elHint.textContent = (n===2 ? 'ふたつ とも タッチ してね！'
+                              : k.name+' を まと に のばそう！');
+  elRound.textContent = (G.plays+1)+' / '+SET.rounds;
+  bigText(label+' タッチ！', same ? k.color : '#b28dff');
+  if(ac){ const t=ac.currentTime; SFX.go(t); }
+  speak(same ? k.say : 'て と あし！', 1.05, 1.3);
+}
+
+function touchFinish(ok){
+  const kind = T.targets.length ? T.targets[0].kind : 'hand';
+  T.targets = [];
+  G.log.push({ id:'touch_'+kind, ok });
+  G.plays++;
+  const t = ac ? ac.currentTime : 0;
+  if(ok){
+    G.stars++; G.combo++; elStar.textContent=G.stars;
+    (G.combo>=3 ? SFX.great : SFX.ok)(t);
+    burst(G.combo>=3 ? 60 : 36);
+    bigText(pick(PRAISE), '#fff3a8'); flash('rgba(255,235,120,1)');
+    G.mood='happy'; speak(pick(PRAISE), 1.05, 1.35);
+  }else{
+    G.combo=0; SFX.miss(t); puff();
+    bigText(pick(CHEER), '#cfe9ff'); flash('rgba(180,220,255,1)');
+    G.mood='oops'; speak(pick(CHEER), 1.0, 1.2);
+  }
+  G.pop=1.2;
+  if(G.plays >= SET.rounds){ G.running=false; setTimeout(showSummary, 900); }
+  else T.nextAt = now() + 1.4;                   // すこし 間 を おいて つぎ へ
+}
+
+// まと に とどいた かを みる（て なら 手くび、あし なら あしくび）
+function limbPoints(kind){
+  const b=G.body; if(!b) return [];
+  const out=[];
+  for(const i of TOUCH_KINDS[kind].lm) if(b.vis(i)) out.push(b.P[i]);
+  if(kind==='foot'){                              // つまさき が みえれば それも つかう
+    for(const i of [31,32]){ const p=b.P[i]; if(p && p.v>0.35) out.push(p); }
+  }
+  return out;
+}
+
+function touchTick(){
+  if(!G.running || SET.mode!=='touch') return;
+  const t = now(), L = touchLevel();
+
+  if(!T.targets.length){
+    if(t >= T.nextAt) spawnTargets();
+    return;
+  }
+  // のこり じかん
+  const left = T.limit - (t - T.start);
+  if(!T.said && left < 1.6){ T.said=true; }
+  if(left <= 0){ touchFinish(false); return; }
+
+  if(!G.judgeOn) return;                          // みるだけモード は タップ で はんてい
+
+  let all = true;
+  for(const tg of T.targets){
+    if(tg.done) continue;
+    const pts = limbPoints(tg.kind);
+    const hit = pts.some(p => Math.hypot(p.x-tg.x, p.y-tg.y) < tg.r);
+    if(hit){
+      tg.hold++;
+      if(tg.hold >= L.tHold){ tg.done=true; if(ac) SFX.pop(ac.currentTime); }
+    }else tg.hold = Math.max(0, tg.hold-1);
+    if(!tg.done) all=false;
+  }
+  if(all) touchFinish(true);
+}
+
+// タップ でも こたえられる ように（みるだけモード／ほじょ が ひつような とき）
+function touchTap(x,y){
+  if(!G.running || SET.mode!=='touch' || !T.targets.length) return;
+  let all=true;
+  for(const tg of T.targets){
+    if(!tg.done && Math.hypot(x-tg.x, y-tg.y) < tg.r*1.15){
+      tg.done=true; if(ac) SFX.pop(ac.currentTime);
+    }
+    if(!tg.done) all=false;
+  }
+  if(all) touchFinish(true);
+}
+
+function drawTargets(){
+  if(SET.mode!=='touch' || !T.targets.length) return;
+  const t=now();
+  const left = clamp((T.limit - (t - T.start)) / T.limit, 0, 1);
+  for(const tg of T.targets){
+    const K = TOUCH_KINDS[tg.kind];
+    const pulse = 1 + Math.sin(t*5)*0.05;
+    const r = tg.r*pulse;
+    ctx.save();
+    // まと の まる
+    ctx.lineWidth = Math.max(6, tg.r*0.16);
+    ctx.fillStyle   = tg.done ? 'rgba(78,203,113,.42)' : 'rgba(255,255,255,.30)';
+    ctx.strokeStyle = tg.done ? 'rgba(78,203,113,.98)' : K.color;
+    ctx.shadowColor='rgba(0,0,0,.3)'; ctx.shadowBlur=14;
+    ctx.beginPath(); ctx.arc(tg.x,tg.y,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.shadowBlur=0;
+    // のこり じかん の わ
+    if(!tg.done){
+      ctx.strokeStyle='rgba(255,255,255,.95)';
+      ctx.lineWidth=Math.max(5, tg.r*0.13);
+      ctx.beginPath();
+      ctx.arc(tg.x,tg.y,r*1.16, -Math.PI/2, -Math.PI/2 + Math.PI*2*left);
+      ctx.stroke();
+    }
+    // て／あし の マーク
+    ctx.font = `${tg.r*1.05}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(tg.done ? '⭕' : K.emoji, tg.x, tg.y + tg.r*0.06);
+    ctx.restore();
+  }
 }
 
 /* =========================================================================
@@ -2200,7 +2422,7 @@ function frame(){
     fit = coverFit(video.videoWidth, video.videoHeight);
   }
   G.body = (lm && fit) ? buildBody(lm, fit) : null;
-  judgeTick();
+  if(SET.mode==='touch') touchTick(); else judgeTick();
 
   // --- 描画 ---
   ctx.clearRect(0,0,CW,CH);
@@ -2216,8 +2438,25 @@ function frame(){
   }
 
   if(G.judgeOn && lm && SET.skeleton && fit) drawSkeleton(lm, fit);
-  if(G.judgeOn && G.body && SET.guide && G.phase==='resp' && !G.result && G.pose && G.pose.guide){
+  if(SET.mode!=='touch' && G.judgeOn && G.body && SET.guide
+     && G.phase==='resp' && !G.result && G.pose && G.pose.guide){
     G.pose.guide(ctx, G.body);
+  }
+
+  // --- タッチモード：まと を えがいて、お手本の 人型 は ださない ---
+  if(SET.mode==='touch'){
+    drawTargets();
+    if(G.judgeOn && G.running && !G.body){
+      ctx.save();
+      ctx.fillStyle='rgba(0,0,0,.45)';
+      rrPath(ctx, CW*0.5-CW*0.35, CH*0.06, CW*0.7, 56, 28); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.font=`800 ${Math.max(16,CW*0.028)}px ${getComputedStyle(document.body).fontFamily}`;
+      ctx.fillText('すこし うしろに さがって、からだ を うつしてね', CW*0.5, CH*0.06+28);
+      ctx.restore();
+    }
+    drawParticles(dt);
+    return;
   }
 
   // --- キャラクターの位置（コール中は大きく中央、レスポンス中は隅） ---
@@ -2328,9 +2567,19 @@ async function beginGame(withCamera){
   $('#resultScreen').classList.add('hidden');
   G.judgeOn = lastWithCamera;
   G.running = true; G.stars=0; G.combo=0; G.plays=0; G.log=[];
+  G.mood='normal'; G.result=null; G.phase='ready';
+  T.targets=[]; T.nextAt = now() + 1.2;          // タッチモード の まと を リセット
   elStar.textContent='0';
   elRound.textContent = '1 / '+SET.rounds;
-  elDone.style.display = lastWithCamera ? 'none' : 'block';
+  // タッチモード は まと を タップ しても こたえられる（カメラなし の とき）
+  elDone.style.display = (lastWithCamera || SET.mode==='touch') ? 'none' : 'block';
+  if(SET.mode==='touch'){
+    elPoseName.textContent='よーい';
+    elPoseChip.querySelector('.em').textContent='✋';
+    elHint.textContent = lastWithCamera
+      ? 'でてきた まと に て（や あし）を のばしてね！'
+      : 'でてきた まと を ゆびで タッチ してね！';
+  }
   resize();
   initAudio();
   if(ac.state==='suspended'){ try{ await ac.resume(); }catch(e){} }
@@ -2356,7 +2605,9 @@ function showSummary(){
 
   // ポーズごとの きろく
   $('#rTally').innerHTML = G.log.map((r,i)=>{
-    const p = POSES[r.id] || {emoji:'❓', name:'？'};
+    const tk = r.id.indexOf('touch_')===0 ? TOUCH_KINDS[r.id.slice(6)] : null;
+    const p = POSES[r.id] || (tk ? {emoji:tk.emoji, name:tk.name+' タッチ'}
+                                 : {emoji:'❓', name:'？'});
     return '<span class="'+(r.ok?'ok':'ng')+'">'+(i+1)+'. '+p.emoji+' '+p.name+
            ' '+(r.ok?'⭕':'—')+'</span>';
   }).join('');
@@ -2396,7 +2647,25 @@ $('#rSetBtn').addEventListener('click', ()=>{
   paintLevels();
 });
 
-/* ---- スタートがめん：むずかしさ と かいすう ---- */
+/* ---- スタートがめん：あそびかた・むずかしさ・かいすう ---- */
+const MODES = {
+  mimic:{ label:'🐰 まねっこ', sub:'おてほんを みて、リズムに あわせて<br>おなじ ポーズを してみよう！' },
+  touch:{ label:'✋ タッチ',   sub:'でてきた まと に、て や あし を<br>のばして タッチ しよう！' }
+};
+const PARTS = { hand:'✋ てだけ', both:'✋🦶 てと あし' };
+const elModes=$('#modeSel'), elParts=$('#partsSel');
+Object.keys(MODES).forEach(k=>{
+  const b=document.createElement('button');
+  b.textContent=MODES[k].label; b.dataset.m=k;
+  b.addEventListener('click',()=>{ SET.mode=k; saveSet(); paintLevels(); });
+  elModes.appendChild(b);
+});
+Object.keys(PARTS).forEach(k=>{
+  const b=document.createElement('button');
+  b.textContent=PARTS[k]; b.dataset.p=k;
+  b.addEventListener('click',()=>{ SET.touchParts=k; saveSet(); paintLevels(); });
+  elParts.appendChild(b);
+});
 const elLevels=$('#levels'), elRounds=$('#roundsSel');
 Object.keys(LEVELS).forEach(k=>{
   const b=document.createElement('button');
@@ -2413,7 +2682,14 @@ Object.keys(LEVELS).forEach(k=>{
 function paintLevels(){
   [...elLevels.children].forEach(b=> b.classList.toggle('on', b.dataset.k===SET.level));
   [...elRounds.children].forEach(b=> b.classList.toggle('on', +b.dataset.n===SET.rounds));
-  const L=LEVELS[SET.level]; if(L) $('#levelNote').textContent=L.note;
+  [...elModes.children].forEach(b=> b.classList.toggle('on', b.dataset.m===SET.mode));
+  [...elParts.children].forEach(b=> b.classList.toggle('on', b.dataset.p===SET.touchParts));
+  $('#touchOpt').style.display = (SET.mode==='touch') ? '' : 'none';
+  $('#startSub').innerHTML = (MODES[SET.mode]||MODES.mimic).sub;
+  const L=LEVELS[SET.level];
+  if(L) $('#levelNote').textContent = (SET.mode==='touch')
+    ? L.note.split('／')[0].trim()+' ／ まと '+(L.tN>1?'2こ':'1こ')+'・'+L.tSec+'びょう'
+    : L.note;
 }
 paintLevels();
 
@@ -2428,8 +2704,17 @@ $('#watchBtn').addEventListener('click', ()=>{
   beginGame(false);
 });
 elDone.addEventListener('click', ()=>{ if(G.phase==='resp'&&!G.result) finishRound(true); });
+// タッチモード：まと を ゆび で さわっても こたえられる
+cv.addEventListener('pointerdown', e=>{
+  if(SET.mode!=='touch' || !G.running) return;
+  const r = cv.getBoundingClientRect();
+  touchTap(e.clientX - r.left, e.clientY - r.top);
+});
 window.addEventListener('keydown', e=>{
-  if(e.code==='Space'){ e.preventDefault(); if(G.running&&G.phase==='resp'&&!G.result) finishRound(true); }
+  if(e.code==='Space'){ e.preventDefault();
+    if(!G.running) return;
+    if(SET.mode==='touch'){ if(T.targets.length) touchFinish(true); return; }
+    if(G.phase==='resp'&&!G.result) finishRound(true); }
   if(e.key==='s'||e.key==='S'){ toggleSettings(); }
 });
 document.addEventListener('gesturestart', e=>e.preventDefault());

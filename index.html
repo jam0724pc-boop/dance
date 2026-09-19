@@ -7,6 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#fff7ec">
 <title>リズムまねっこ ｜ からだで あそぼう</title>
+<!-- アイコンも外部ファイルを使わず、data URI で埋め込み -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23fff7ec'/%3E%3Cg stroke='%233d4a63' stroke-width='7' stroke-linecap='round' fill='none'%3E%3Cpath d='M32 30v14M26 56l6-12 6 12'/%3E%3C/g%3E%3Cg stroke='%23ffa53c' stroke-width='7' stroke-linecap='round' stroke-linejoin='round' fill='none'%3E%3Cpath d='M18 12l4 12M46 12l-4 12M22 24h20'/%3E%3C/g%3E%3Ccircle cx='32' cy='20' r='7' fill='%233d4a63'/%3E%3C/svg%3E">
 <!--
 ==================================================================================
   リズムまねっこ （リズム天国風 コール＆レスポンス 動作模倣アプリ）
@@ -69,19 +71,22 @@
   }
   #gear:active{ transform:translateY(2px); }
 
-  #center{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; }
+  /* 文字はいちばん上に。お手本の人型と かさならないようにする */
+  #center{ flex:1; display:flex; flex-direction:column; align-items:center;
+           justify-content:flex-start; gap:min(1.6vh,12px); padding-top:min(2.5vh,18px); }
+  #dots{ margin-top:min(0.8vh,6px); }
   #bigText{
-    font-size:clamp(34px,9vw,96px); font-weight:900; letter-spacing:.06em;
+    font-size:clamp(26px,6.4vw,66px); font-weight:900; letter-spacing:.06em;
     color:#fff; text-align:center; line-height:1.15;
-    text-shadow: 0 4px 0 rgba(0,0,0,.25), 0 0 22px rgba(0,0,0,.35);
+    text-shadow: 0 3px 0 rgba(0,0,0,.3), 0 0 18px rgba(0,0,0,.5), 0 0 34px rgba(0,0,0,.35);
     opacity:0;
   }
   #bigText.show{ animation:pop .45s cubic-bezier(.2,1.6,.4,1) both; }
   @keyframes pop{ 0%{opacity:0; transform:scale(.6) rotate(-4deg);} 60%{opacity:1; transform:scale(1.12) rotate(2deg);} 100%{opacity:1; transform:scale(1) rotate(0);} }
   #chant{ display:flex; gap:min(3vw,22px); }
   #chant span{
-    font-size:clamp(30px,8vw,80px); font-weight:900; color:#fff;
-    text-shadow:0 4px 0 rgba(0,0,0,.25);
+    font-size:clamp(24px,5.6vw,58px); font-weight:900; color:#fff;
+    text-shadow:0 3px 0 rgba(0,0,0,.3), 0 0 16px rgba(0,0,0,.5);
     animation:beatpop .35s cubic-bezier(.2,1.7,.4,1) both;
   }
   @keyframes beatpop{ 0%{transform:scale(.4) translateY(12px); opacity:0;} 100%{transform:scale(1) translateY(0); opacity:1;} }
@@ -117,8 +122,16 @@
       radial-gradient(circle at 26% 82%, #cdeeff 0 20%, transparent 20.5%),
       radial-gradient(circle at 78% 78%, #d8f5cf 0 16%, transparent 16.5%),
       var(--cream);
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:min(3vh,22px); padding:24px; text-align:center; overflow-y:auto;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    gap:min(2vh,16px); padding:max(16px,3vh) 20px; text-align:center;
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+  }
+  /* なかみが すくない ときは まんなか、おおい ときは うえから スクロール できる
+     ようにする（まんなか よせ だけだと 上が きれて さわれなく なるため） */
+  .screen::before, .screen::after{ content:''; margin:auto; }
+  @media (max-height:780px){
+    .screen .faces{ display:none; }        /* せまい がめん では しぼって みせる */
+    .screen .note{ font-size:12px; line-height:1.6; }
   }
   .screen.hidden{ display:none; }
   h1{ font-size:clamp(30px,7vw,68px); margin:0; font-weight:900; letter-spacing:.04em;
@@ -133,6 +146,36 @@
   .bigbtn:active{ transform:translateY(3px); }
   .note{ font-size:clamp(12px,2vw,16px); opacity:.7; max-width:640px; line-height:1.8; }
   .faces{ font-size:clamp(34px,8vw,64px); letter-spacing:.1em; }
+
+  /* ===== むずかしさ・かいすう の せんたく ===== */
+  .levelbox{ background:rgba(255,255,255,.72); border-radius:24px; padding:16px 20px;
+             box-shadow:var(--shadow); max-width:min(700px,94vw); }
+  .levellabel{ margin:0 0 8px; font-weight:800; font-size:clamp(13px,2.3vw,19px); opacity:.8; }
+  .levels{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+  .levelnote + .levellabel{ margin-top:14px; }
+  .levels button{
+    border:3px solid #e6d8c6; background:#fff; color:var(--ink); font-family:var(--font);
+    font-weight:900; font-size:clamp(15px,2.7vw,22px); padding:12px 22px; border-radius:999px; cursor:pointer;
+  }
+  .levels.small button{ font-size:clamp(14px,2.4vw,19px); padding:10px 20px; }
+  .levels button.on{ background:var(--yellow); border-color:var(--orange); }
+  .levelnote{ margin:10px 0 0; font-size:clamp(12px,2.1vw,17px); font-weight:700; opacity:.72; }
+
+  /* ===== けっか がめん ===== */
+  .bigscore{ margin:0; font-weight:900; line-height:1; color:var(--ink); }
+  .bigscore #rNum{ font-size:clamp(64px,17vw,150px); color:var(--orange);
+                   text-shadow:0 5px 0 rgba(0,0,0,.10); }
+  .bigscore .of{ font-size:clamp(22px,5vw,42px); }
+  .starrow{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; max-width:min(680px,94vw);
+            font-size:clamp(22px,5vw,40px); line-height:1; }
+  .tally{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+          max-width:min(760px,94vw); }
+  .tally span{
+    background:#fff; border-radius:999px; padding:7px 14px; box-shadow:0 3px 0 rgba(0,0,0,.08);
+    font-size:clamp(12px,2.1vw,17px); font-weight:800; white-space:nowrap;
+  }
+  .tally span.ng{ background:#f1eae2; opacity:.75; }
+  .rbtns{ display:flex; flex-wrap:wrap; gap:12px; justify-content:center; }
 
   /* ===== 設定パネル ===== */
   #settings{
@@ -154,6 +197,7 @@
     font-weight:800; font-size:clamp(14px,2.4vw,19px); padding:11px 18px; border-radius:999px; cursor:pointer;
   }
   .seg button.on, .chipbtn.on{ background:var(--yellow); border-color:var(--orange); }
+  .grp{ margin:12px 0 7px; font-size:clamp(12px,2.1vw,16px); font-weight:800; opacity:.65; }
   input[type=range]{ width:100%; height:38px; accent-color:var(--orange); }
   .val{ font-weight:900; font-size:clamp(15px,2.6vw,20px); }
   .sheetbtns{ display:flex; gap:10px; margin-top:6px; }
@@ -180,6 +224,7 @@
   <div id="hud">
     <div class="row">
       <div class="chip" id="poseChip"><span class="em">🎵</span><span id="poseName">じゅんび</span></div>
+      <div class="chip" id="roundChip"><span class="em">🔢</span><span id="roundNum">1 / 10</span></div>
       <div class="chip" id="score"><span class="em">⭐</span><span id="starNum">0</span></div>
       <button id="gear" aria-label="せってい">⚙️</button>
     </div>
@@ -197,16 +242,38 @@
 
 <!-- スタート画面 -->
 <div class="screen" id="startScreen">
-  <div class="faces">🐰 ✈️ 🥁 ⛄️</div>
+  <div class="faces">🐰 ✈️ 👏 🦩</div>
   <h1>リズム まねっこ</h1>
   <p class="sub">おてほんを みて、リズムに あわせて<br>おなじ ポーズを してみよう！</p>
+
+  <div class="levelbox">
+    <p class="levellabel">むずかしさ を えらんでね</p>
+    <div class="levels" id="levels"></div>
+    <p class="levelnote" id="levelNote"></p>
+    <p class="levellabel">なんかい やる？</p>
+    <div class="levels small" id="roundsSel"></div>
+  </div>
+
   <button class="bigbtn" id="startBtn">はじめる</button>
   <button class="bigbtn alt" id="watchBtn">カメラなしで みる（みるだけモード）</button>
   <p class="note">
-    ※ カメラの きょかを たずねられたら「きょか」を えらんでください。<br>
-    映像は端末（ブラウザ）の中だけで処理され、外部のサーバーへ送信されることはありません。<br>
+    ※ カメラの きょかを たずねられたら「きょか」を えらんでください。映像は端末（ブラウザ）の中だけで処理され、外部のサーバーへ送信されることはありません。<br>
     推奨環境：iPadOS 16.4 以降の Safari ／ Windows・Mac の Edge・Chrome（https でご利用ください）
   </p>
+</div>
+
+<!-- けっか がめん -->
+<div class="screen hidden" id="resultScreen">
+  <div class="faces" id="rFace">🎉</div>
+  <h1 id="rTitle">よく がんばりました！</h1>
+  <p class="bigscore"><span id="rNum">0</span><span class="of"> / <span id="rTotal">10</span> かい</span></p>
+  <div class="starrow" id="rStars"></div>
+  <p class="sub" id="rMsg"></p>
+  <div class="tally" id="rTally"></div>
+  <div class="rbtns">
+    <button class="bigbtn" id="againBtn">もういちど あそぶ</button>
+    <button class="bigbtn alt" id="rSetBtn">⚙️ せってい を かえる</button>
+  </div>
 </div>
 
 <!-- 読み込み中 -->
@@ -232,22 +299,42 @@
     </div>
 
     <div class="item">
+      <label>むずかしさ（3だんかい）</label>
+      <div class="seg" id="segLevel"></div>
+    </div>
+
+    <div class="item">
+      <label>なんかい で おしまい？</label>
+      <div class="seg" id="segRounds">
+        <button data-v="5">5 かい</button><button data-v="10">10 かい</button><button data-v="20">20 かい</button>
+      </div>
+    </div>
+
+    <div class="item">
       <label>まつ じかん（まねっこ できる ながさ）</label>
       <div class="seg" id="segWait">
-        <button data-v="4">ふつう</button><button data-v="8">ゆっくり</button><button data-v="12">とても ゆっくり</button>
+        <button data-v="5">みじかめ</button><button data-v="8">ふつう</button><button data-v="12">ゆっくり</button>
       </div>
     </div>
 
     <div class="item">
       <label>はんていの やさしさ</label>
       <div class="seg" id="segTol">
-        <button data-v="1.6">とても やさしい</button><button data-v="1.3">やさしい</button><button data-v="1.0">ふつう</button>
+        <button data-v="1.7">とても やさしい</button><button data-v="1.3">ふつう</button><button data-v="1.0">きびしい</button>
       </div>
     </div>
 
     <div class="item">
-      <label>つかう ポーズ</label>
-      <div class="seg" id="segPoses"></div>
+      <label>つかう ポーズ（いま <b id="poseCount">10</b> しゅるい）</label>
+      <div class="seg" style="margin-bottom:10px">
+        <button class="chipbtn" id="presetEasy">⭐ おすすめ 10しゅるい</button>
+        <button class="chipbtn" id="presetArm">🪑 すわったままでも OK</button>
+        <button class="chipbtn" id="presetAll">🙆 ぜんぶ つかう</button>
+      </div>
+      <p class="grp">うで・じょうはんしん（いす や 車いす でも できます）</p>
+      <div class="seg" id="segArm"></div>
+      <p class="grp">ぜんしん（たって、ひざ や あし が うつる ばしょ で）</p>
+      <div class="seg" id="segLeg"></div>
     </div>
 
     <div class="item">
@@ -286,17 +373,33 @@ const CONFIG = {
   poseCDN : 'https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/',
   camCDN  : 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js',
   defaults: {
-    vol:80, bpm:100, waitBeats:8, tol:1.3,
+    vol:80, bpm:100, waitBeats:8, tol:1.3, level:'normal', rounds:10,
     voice:true, guide:true, skeleton:true,
-    poses:['usagi','hikouki','taiko','freeze']
+    poses:null            // null のときは EASY_POSES を つかう
   }
 };
+// むずかしさ 3だんかい（はんていの ゆるさ・まつ じかん・キープ時間 をまとめて かえる）
+const LEVELS = {
+  easy  :{ label:'😊 やさしい',   note:'ざっくり はんてい ／ ゆっくり まつ',
+           tol:1.7, waitBeats:12, hold:2, bpm:88  },
+  normal:{ label:'🙂 ふつう',     note:'ちょうど いい バランス',
+           tol:1.3, waitBeats:8,  hold:3, bpm:100 },
+  hard  :{ label:'💪 むずかしい', note:'きちんと ポーズ ／ テンポ はやめ',
+           tol:1.0, waitBeats:5,  hold:5, bpm:116 }
+};
+const SAVE_KEY = 'rhythm-manekko-v3';
 let SET = Object.assign({}, CONFIG.defaults);
 try{
-  const raw = localStorage.getItem('rhythm-manekko-v1');
+  const raw = localStorage.getItem(SAVE_KEY);
   if(raw) SET = Object.assign(SET, JSON.parse(raw));
 }catch(e){}
-function saveSet(){ try{ localStorage.setItem('rhythm-manekko-v1', JSON.stringify(SET)); }catch(e){} }
+function saveSet(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(SET)); }catch(e){} }
+// むずかしさ を えらぶと、かんれんする せってい が まとめて かわる
+function applyLevel(k){
+  const L = LEVELS[k]; if(!L) return;
+  SET.level=k; SET.tol=L.tol; SET.waitBeats=L.waitBeats; SET.bpm=L.bpm;
+  saveSet();
+}
 
 /* =========================================================================
    2. 音（Web Audio API：外部音源を使わずプログラム生成）
@@ -498,9 +601,702 @@ const POSES = {
       rrPath(ctx, b.shMid.x-1.5*u, b.headY-0.9*u, 3.0*u, 3.6*u, u*0.4); ctx.stroke();
       ctx.restore();
     }
+  },
+
+  /* ---- ここから 追加ぶん ------------------------------------------------ */
+
+  kirakira:{
+    name:'キラキラ', emoji:'✨', color:'#ffd93d',
+    call:'つぎは、キラキラ！',
+    chant:['キ','ラ','キ','ラ'],
+    notes:[783.99,987.77,1174.7,987.77],
+    hint:'かおの よこ で おてて キラキラ！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit;
+      const up = w => (b.shMid.y - 0.22*u/tol) - w.y;        // 肩より うえ
+      const out= w => Math.abs(w.x-b.shMid.x) - 0.32*u/tol;  // からだ の よこ
+      const okL = up(b.P[15])>0 && out(b.P[15])>0;
+      const okR = up(b.P[16])>0 && out(b.P[16])>0;
+      const sc=(okL?0.5:0)+(okR?0.5:0);
+      return {ok:okL&&okR, score:sc,
+              miss: sc>0? 'もう かたほう も あげて！' : 'かおの よこ に おてて を あげよう！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      const w=[b.P[15],b.P[16]].sort((a,c)=>a.x-c.x);
+      ring(ctx, b.shMid.x-0.85*u, b.headY+0.15*u, 0.40*u, w[0]);
+      ring(ctx, b.shMid.x+0.85*u, b.headY+0.15*u, 0.40*u, w[1]);
+    }
+  },
+
+  kata:{
+    name:'カタトントン', emoji:'🤗', color:'#4ecb71',
+    call:'つぎは、かた トントン！',
+    chant:['カ','タ','トン','トン'],
+    notes:[440,440,523.25,659.25],
+    hint:'りょうての おてて を かた に ポン！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit, r=0.55*u*tol;
+      // じぶんの かた でも、うでを くんで はんたいの かた でも OK
+      const near = w => Math.min(Math.hypot(w.x-b.shL.x,w.y-b.shL.y),
+                                 Math.hypot(w.x-b.shR.x,w.y-b.shR.y)) < r;
+      const okL=near(b.P[15]), okR=near(b.P[16]);
+      const sc=(okL?0.5:0)+(okR?0.5:0);
+      return {ok:okL&&okR, score:sc,
+              miss: sc>0? 'もう かたほう も かた に！' : 'おてて を かた に のせよう！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      const s=[b.shL,b.shR].sort((a,c)=>a.x-c.x);
+      const w=[b.P[15],b.P[16]].sort((a,c)=>a.x-c.x);
+      ring(ctx, s[0].x, s[0].y, 0.45*u, w[0]);
+      ring(ctx, s[1].x, s[1].y, 0.45*u, w[1]);
+    }
+  },
+
+  kiotsuke:{
+    name:'きをつけ', emoji:'🧍', color:'#56b9ff',
+    call:'つぎは、きを つけ！ ピタッと たってね',
+    chant:['き','を','つ','け'],
+    notes:[392,392,440,523.25],
+    hint:'おてて を からだの よこ に ピタッ！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit;
+      const down = w => w.y > b.shMid.y + 0.95*u/tol;          // うでを おろしている
+      const side = w => Math.abs(w.x-b.shMid.x) < 0.85*u*tol;  // からだ の そば
+      const okL = down(b.P[15]) && side(b.P[15]);
+      const okR = down(b.P[16]) && side(b.P[16]);
+      const calm = (b.motion===null) || b.motion < 0.20*tol;   // じっと している
+      const sc = (okL?0.4:0)+(okR?0.4:0)+(calm?0.2:0);
+      return {ok: okL&&okR&&calm, score:sc,
+              miss: (okL&&okR)? 'そのまま ピタッと とまってね！' : 'おてて を すとん と おろそう！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      const s=[b.shL,b.shR].sort((a,c)=>a.x-c.x);
+      const w=[b.P[15],b.P[16]].sort((a,c)=>a.x-c.x);
+      ring(ctx, s[0].x-0.10*u, s[0].y+1.45*u, 0.40*u, w[0]);
+      ring(ctx, s[1].x+0.10*u, s[1].y+1.45*u, 0.40*u, w[1]);
+    }
+  },
+
+  ojigi:{
+    name:'ぺこり', emoji:'🙇', color:'#ffa53c',
+    call:'つぎは、ぺこり！ ごあいさつ',
+    chant:['ぺ','こ','り','ん'],
+    notes:[523.25,440,349.23,392],
+    hint:'あたま を ぺこり と さげよう！',
+    judge(b,tol){
+      const u=b.unit;
+      const drop = b.headY - (b.shMid.y - 0.30*u/tol);   // 正なら あたまが さがった
+      const ok = drop > 0;
+      const sc = clamp(1 + drop/(0.5*u), 0, 1);
+      return {ok, score:sc, miss:'もうすこし あたま を さげて！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      const y=b.shMid.y-0.25*u;
+      const head={x:b.nose.x, y:b.headY};
+      ring(ctx, b.shMid.x, y, 0.70*u, (head.y>y-0.7*u)?head:null, true);
+      ctx.save();
+      ctx.globalAlpha=0.8; ctx.strokeStyle='rgba(255,255,255,.9)'; ctx.lineWidth=Math.max(5,u*0.08);
+      arrow(ctx, b.shMid.x, y-1.0*u, b.shMid.x, y-0.35*u, u*0.1);
+      ctx.restore();
+    }
+  },
+
+  fune:{
+    name:'おふね', emoji:'⛵', color:'#b28dff',
+    call:'つぎは、おふね！ からだを よこに かたむけて',
+    chant:['ゆ','ら','ゆ','ら'],
+    notes:[440,392,440,523.25],
+    hint:'からだ を よこ に ゆーらり かたむけて！',
+    judge(b,tol){
+      const u=b.unit;
+      const tilt = Math.abs(b.shL.y-b.shR.y) / (0.30*u/tol);          // かたの かたむき
+      let lean = 0;
+      if(b.hipMid) lean = Math.abs(b.shMid.x-b.hipMid.x) / (0.38*u/tol); // よこ に たおす
+      const sc = clamp(Math.max(tilt,lean), 0, 1);
+      return {ok: sc>=1, score:sc, miss:'もうすこし よこ に かたむけて！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      ctx.save();
+      ctx.globalAlpha=0.55+0.4*Math.sin(now()*4);
+      ctx.strokeStyle='rgba(178,141,255,.95)'; ctx.lineWidth=Math.max(6,u*0.11); ctx.lineCap='round';
+      const y=b.shMid.y-0.2*u;
+      arrow(ctx, b.shMid.x-0.5*u, y, b.shMid.x-1.5*u, y+0.4*u, u*0.13);
+      arrow(ctx, b.shMid.x+0.5*u, y, b.shMid.x+1.5*u, y+0.4*u, u*0.13);
+      ctx.restore();
+    }
+  },
+
+  banzai:{
+    name:'バンザイ', emoji:'🙌', color:'#ffa53c',
+    call:'つぎは、バンザイ！',
+    chant:['バ','ン','ザ','イ'],
+    notes:[523.25,659.25,783.99,1046.5],
+    hint:'りょうて を たかーく のばそう！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit;
+      const hi = w => w.y < b.headY - 0.40*u/tol;              // あたま より ずっと うえ
+      const ext= e => !e || e.v<0.3 ? true : e.y < b.shMid.y;  // ひじ も あがっている
+      const okL = hi(b.P[15]) && ext(b.P[13]);
+      const okR = hi(b.P[16]) && ext(b.P[14]);
+      const sc=(okL?0.5:0)+(okR?0.5:0);
+      return {ok:okL&&okR, score:sc,
+              miss: sc>0? 'もう かたほう も たかく！' : 'もっと たかく のばそう！'};
+    },
+    guide(ctx,b){
+      const u=b.unit, y=b.headY-0.95*u;
+      const w=[b.P[15],b.P[16]].sort((a,c)=>a.x-c.x);
+      ring(ctx, b.shMid.x-0.55*u, y, 0.38*u, w[0]);
+      ring(ctx, b.shMid.x+0.55*u, y, 0.38*u, w[1]);
+    }
+  },
+
+  hai:{
+    name:'はーい', emoji:'🙋', color:'#ff7aa2',
+    call:'つぎは、はーい！ かたて を あげてね',
+    chant:['は','ー','い','！'],
+    notes:[523.25,587.33,783.99,783.99],
+    hint:'どちらか かたほうの て を あげて！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit;
+      const up  = w => w.y < b.headY + 0.12*u*tol;
+      const dwn = w => w.y > b.shMid.y + 0.25*u/tol;
+      const L=b.P[15], R=b.P[16];
+      const a = up(L)&&dwn(R), c = up(R)&&dwn(L);
+      const sc = (up(L)||up(R)?0.6:0) + (dwn(L)||dwn(R)?0.4:0);
+      return {ok:a||c, score:clamp(sc,0,1),
+              miss: (up(L)&&up(R))? 'かたほう だけで いいよ！' : 'かたほうの て を たかく あげて！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      const hi=(b.P[15].y<b.P[16].y)?b.P[15]:b.P[16];
+      ring(ctx, hi.x, b.headY-0.55*u, 0.45*u, hi);
+    }
+  },
+
+  maru:{
+    name:'まる', emoji:'⭕', color:'#4ecb71',
+    call:'つぎは、まる！ あたまの うえで おおきな まる',
+    chant:['マ','ル','だ','よ'],
+    notes:[659.25,783.99,987.77,783.99],
+    hint:'あたまの うえで おてて を くっつけて まる！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit, L=b.P[15], R=b.P[16];
+      const up = L.y < b.headY+0.15*u*tol && R.y < b.headY+0.15*u*tol;
+      const near = Math.abs(L.x-R.x) < 0.60*u*tol;
+      const sc=(up?0.5:0)+(near?0.5:0);
+      return {ok:up&&near, score:sc,
+              miss: up? 'おてて を くっつけて まる に！' : 'あたまの うえに あげてね！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      const cx=b.nose.x, cy=b.headY-0.60*u;
+      const near=(Math.abs(b.P[15].x-cx)<0.7*u)?b.P[15]:null;
+      ring(ctx, cx, cy, 0.55*u, near, true);
+    }
+  },
+
+  batsu:{
+    name:'ばってん', emoji:'❌', color:'#56b9ff',
+    call:'つぎは、ばってん！ うで を クロス',
+    chant:['バ','ッ','テ','ン'],
+    notes:[440,415.30,392,329.63],
+    hint:'むね の まえで うで を バッテン！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit, L=b.P[15], R=b.P[16];
+      // ミラー表示では ふだん L が 画面左。クロスすると 左右が いれかわる。
+      const cross = (L.x - R.x) > 0.12*u/tol;
+      const band = w => w.y > b.shMid.y-0.70*u && w.y < b.shMid.y+1.30*u*tol;
+      const okB = band(L)&&band(R);
+      const sc=(cross?0.6:0)+(okB?0.4:0);
+      return {ok:cross&&okB, score:sc,
+              miss: cross? 'むね の まえ に もってきて！' : 'うで を クロス させてね！'};
+    },
+    guide(ctx,b){
+      const u=b.unit, cx=b.shMid.x, cy=b.shMid.y+0.45*u;
+      ctx.save();
+      ctx.globalAlpha=0.45+0.5*Math.sin(now()*4);
+      ctx.strokeStyle='rgba(86,185,255,.95)'; ctx.lineWidth=Math.max(7,u*0.16); ctx.lineCap='round';
+      ctx.beginPath();
+      ctx.moveTo(cx-0.55*u,cy-0.55*u); ctx.lineTo(cx+0.55*u,cy+0.55*u);
+      ctx.moveTo(cx+0.55*u,cy-0.55*u); ctx.lineTo(cx-0.55*u,cy+0.55*u);
+      ctx.stroke(); ctx.restore();
+    }
+  },
+
+  atama:{
+    name:'あたま', emoji:'🧠', color:'#ff7aa2', body:true,
+    call:'つぎは、あたま！ おてて を あたま に',
+    chant:['あ','た','ま','ポン'],
+    notes:[659.25,659.25,783.99,880],
+    hint:'あたま を ポンポン と さわろう！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit;
+      const on = w => (w.y < b.headY + 0.30*u*tol) && (w.y > b.headY - 0.95*u*tol)
+                   && (Math.abs(w.x-b.nose.x) < 0.80*u*tol);
+      const okL=on(b.P[15]), okR=on(b.P[16]);
+      const sc=(okL?0.5:0)+(okR?0.5:0);
+      return {ok:okL&&okR, score:sc,
+              miss: sc>0? 'もう かたほう も あたま に！' : 'あたま を さわってみよう！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      const w=[b.P[15],b.P[16]].sort((a,c)=>a.x-c.x);
+      ring(ctx, b.nose.x-0.34*u, b.headY-0.32*u, 0.34*u, w[0]);
+      ring(ctx, b.nose.x+0.34*u, b.headY-0.32*u, 0.34*u, w[1]);
+    }
+  },
+
+  hoppe:{
+    name:'ほっぺ', emoji:'😊', color:'#ffd93d', body:true,
+    call:'つぎは、ほっぺ！ おてて を ほっぺ に',
+    chant:['ほ','っ','ぺ','ん'],
+    notes:[587.33,659.25,587.33,523.25],
+    hint:'ほっぺた を おてて で ぎゅっ！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit;
+      const on = w => (w.y > b.headY - 0.30*u*tol) && (w.y < b.shMid.y + 0.35*u*tol)
+                   && (Math.abs(w.x-b.nose.x) < 0.90*u*tol);
+      const okL=on(b.P[15]), okR=on(b.P[16]);
+      const sc=(okL?0.5:0)+(okR?0.5:0);
+      return {ok:okL&&okR, score:sc,
+              miss: sc>0? 'もう かたほう も ほっぺ に！' : 'かお の よこ に おてて を！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      const w=[b.P[15],b.P[16]].sort((a,c)=>a.x-c.x);
+      const y=(b.headY+b.shMid.y)/2;
+      ring(ctx, b.nose.x-0.50*u, y, 0.36*u, w[0]);
+      ring(ctx, b.nose.x+0.50*u, y, 0.36*u, w[1]);
+    }
+  },
+
+  heso:{
+    name:'おへそ', emoji:'👇', color:'#ffa53c', body:true,
+    call:'つぎは、おへそ！ おてて を おなか に',
+    chant:['お','へ','そ','ん'],
+    notes:[392,349.23,329.63,293.66],
+    hint:'おなか の まんなか に おてて を！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit, L=b.P[15], R=b.P[16];
+      const lowEnough = w => w.y > b.shMid.y + 0.85*u/tol;
+      const notTooLow = w => b.hipMid ? (w.y < b.hipMid.y + 0.75*u*tol)
+                                      : (w.y < b.shMid.y + 2.2*u*tol);
+      const together = Math.abs(L.x-R.x) < 0.60*u*tol;   // りょうて を まんなか に あつめる
+      const okL=lowEnough(L)&&notTooLow(L), okR=lowEnough(R)&&notTooLow(R);
+      const sc=(okL?0.35:0)+(okR?0.35:0)+(together?0.3:0);
+      return {ok:okL&&okR&&together, score:sc,
+              miss: together? 'もうすこし おなか の ところ へ！' : 'りょうて を まんなか に あつめて！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      const cy = b.hipMid ? (b.shMid.y+b.hipMid.y)/2 + 0.35*u : b.shMid.y+1.35*u;
+      const near=(Math.abs(b.P[15].x-b.shMid.x)<0.7*u)?b.P[15]:null;
+      ring(ctx, b.shMid.x, cy, 0.55*u, near, true);
+    }
+  },
+
+  hiza:{
+    name:'ひざ', emoji:'🦵', color:'#4ecb71', body:true,
+    call:'つぎは、ひざ！ おてて を ひざ に',
+    chant:['ひ','ざ','ポン','ポン'],
+    notes:[329.63,329.63,392,440],
+    hint:'ひざ に おてて を ぽん と のせよう！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit;
+      if(b.vis(25)&&b.vis(26)){
+        // 「ひざ の ちかく」だけだと、うでを おろしただけで あたって しまうので、
+        // 「こし より したまで てを のばした」ことも あわせて みる。
+        const below = w => !b.hipMid || w.y > b.hipMid.y + 0.25*u;
+        const near = w => below(w) &&
+                          Math.min(Math.hypot(w.x-b.P[25].x,w.y-b.P[25].y),
+                                   Math.hypot(w.x-b.P[26].x,w.y-b.P[26].y)) < 0.95*u*tol;
+        const okL=near(b.P[15]), okR=near(b.P[16]);
+        const sc=(okL?0.5:0)+(okR?0.5:0);
+        return {ok:okL&&okR, score:sc,
+                miss: sc>0? 'もう かたほう も ひざ に！' : 'ひざ に おてて を のせよう！'};
+      }
+      // ひざ が うつって いない ときは「ひくい ところ に て を おろす」で だいたい はんてい
+      if(!b.hipMid) return {ok:false,score:0,miss:'ひざ が うつるように カメラを ひいてね'};
+      const low = w => w.y > b.hipMid.y + 0.25*u/tol;
+      const okL=low(b.P[15]), okR=low(b.P[16]);
+      const sc=(okL?0.5:0)+(okR?0.5:0);
+      return {ok:okL&&okR, score:sc, miss:'もっと ひくい ところ に おてて を！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      if(!(b.vis(25)&&b.vis(26))) return;
+      const k=[b.P[25],b.P[26]].sort((a,c)=>a.x-c.x);
+      const w=[b.P[15],b.P[16]].sort((a,c)=>a.x-c.x);
+      ring(ctx, k[0].x, k[0].y, 0.48*u, w[0]);
+      ring(ctx, k[1].x, k[1].y, 0.48*u, w[1]);
+    }
+  },
+
+  bunbun:{
+    name:'ぶんぶん', emoji:'🌀', color:'#b28dff',
+    call:'つぎは、ぶんぶん！ いっぱい うごこう',
+    chant:['ぶん','ぶん','ぶん','ぶん'],
+    notes:[440,523.25,440,587.33],
+    hint:'からだ を いっぱい うごかそう！',
+    judge(b,tol){
+      if(b.motion===null) return {ok:false,score:0,miss:'からだ を うごかしてね'};
+      const th = 0.20/tol;                       // やさしいほど すこしの うごきで OK
+      const sc = clamp(b.motion/th, 0, 1);
+      return {ok: b.motion > th, score:sc, miss:'もっと いっぱい うごかそう！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      ctx.save();
+      ctx.globalAlpha=0.5+0.4*Math.sin(now()*7);
+      ctx.strokeStyle='rgba(178,141,255,.95)'; ctx.lineWidth=Math.max(6,u*0.11); ctx.lineCap='round';
+      for(const sgn of [-1,1]){
+        for(let i=0;i<3;i++){
+          const x=b.shMid.x+sgn*(1.15+i*0.26)*u, y=b.shMid.y+(i-1)*0.42*u;
+          ctx.beginPath(); ctx.moveTo(x,y-0.2*u); ctx.lineTo(x,y+0.2*u); ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+  },
+
+  /* ---- ここから「ぜんしんが うつる とき」むけ ---------------------------- */
+
+  daiji:{
+    name:'おおきく', emoji:'⭐', color:'#ffd93d', legs:true,
+    call:'つぎは、おおきく！ だいの じ に なってね',
+    chant:['お','お','き','く'],
+    notes:[392,523.25,659.25,880],
+    hint:'てあし を ぜんぶ ひろげて おおきく！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      if(!b.vis(27)||!b.vis(28)) return {ok:false,score:0,miss:'あし が うつるように さがってね'};
+      const u=b.unit;
+      // うでを おろした ふつうの しせい でも「そこそこ ひろい」ので、
+      // やさしく しても そこ を わって しまわない ように ひかえめに ゆるめる。
+      const armTh = u*(1.10 - (tol-1)*0.12);
+      const legTh = u*(1.15 - (tol-1)*0.12);
+      const armOut = w => Math.abs(w.x-b.shMid.x) > armTh;
+      const okA = armOut(b.P[15]) && armOut(b.P[16]);
+      const legOut = Math.abs(b.P[27].x-b.P[28].x) > legTh;
+      const sc=(okA?0.6:0)+(legOut?0.4:0);
+      return {ok:okA&&legOut, score:sc,
+              miss: okA? 'あし も ひろげて！' : 'うで を おおきく ひろげて！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      ctx.save();
+      ctx.globalAlpha=0.45+0.45*Math.sin(now()*4);
+      ctx.strokeStyle='rgba(255,217,61,.95)'; ctx.lineWidth=Math.max(6,u*0.12); ctx.lineCap='round';
+      for(const [dx,dy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){
+        arrow(ctx, b.shMid.x+dx*0.7*u, b.shMid.y+dy*0.7*u,
+                   b.shMid.x+dx*1.6*u, b.shMid.y+dy*1.6*u, u*0.14);
+      }
+      ctx.restore();
+    }
+  },
+
+  kataashi:{
+    name:'かたあし', emoji:'🦩', color:'#ff7aa2', legs:true,
+    call:'つぎは、かたあし たっち！',
+    chant:['か','た','あ','し'],
+    notes:[523.25,659.25,783.99,659.25],
+    hint:'どちらか かたほうの あし を あげて！',
+    judge(b,tol){
+      const A=[b.P[27],b.P[28]], K=[b.P[25],b.P[26]];
+      const pair = (b.vis(27)&&b.vis(28)) ? A : ((b.vis(25)&&b.vis(26)) ? K : null);
+      if(!pair) return {ok:false,score:0,miss:'あし が うつるように さがってね'};
+      const u=b.unit;
+      const d = Math.abs(pair[0].y-pair[1].y) / (0.45*u/tol);
+      const sc = clamp(d,0,1);
+      return {ok: sc>=1, score:sc, miss:'もうすこし たかく あし を あげて！'};
+    },
+    guide(ctx,b){
+      if(!b.vis(27)||!b.vis(28)) return;
+      const u=b.unit;
+      const lo=[b.P[27],b.P[28]].sort((a,c)=>c.y-a.y)[0];   // ひくい ほう＝ゆか に ついた あし
+      ring(ctx, lo.x, lo.y-0.75*u, 0.45*u,
+           (b.P[27].y<b.P[28].y? b.P[27]:b.P[28]), true);
+    }
+  },
+
+  kaeru:{
+    name:'カエル', emoji:'🐸', color:'#4ecb71', legs:true,
+    call:'つぎは、カエル！ しゃがんで ぴょん',
+    chant:['ケロ','ケロ','しゃ','がむ'],
+    notes:[329.63,392,329.63,261.63],
+    hint:'ひざ を まげて しゃがもう！',
+    judge(b,tol){
+      // ひざの「まがりぐあい（角度）」で みる。からだの 大きさや カメラ距離に
+      // 左右されないので、どの子でも おなじ 感覚で はんてい できます。
+      const ang=(h,k,a)=>{
+        if(!h||!k||!a) return null;
+        const v1={x:h.x-k.x,y:h.y-k.y}, v2={x:a.x-k.x,y:a.y-k.y};
+        const n1=Math.hypot(v1.x,v1.y), n2=Math.hypot(v2.x,v2.y);
+        if(n1<1||n2<1) return null;
+        return Math.acos(clamp((v1.x*v2.x+v1.y*v2.y)/(n1*n2),-1,1))*180/Math.PI;
+      };
+      const A=[], L=[[23,25,27],[24,26,28]];
+      for(const [h,k,a] of L){
+        if(b.vis(h)&&b.vis(k)&&b.vis(a)){ const d=ang(b.P[h],b.P[k],b.P[a]); if(d!==null) A.push(d); }
+      }
+      if(!A.length) return {ok:false,score:0,miss:'あし が うつるように さがってね'};
+      const deg = A.reduce((s,v)=>s+v,0)/A.length;   // まっすぐ立つと 約180°
+      const th  = 148 + (tol-1)*28;                  // やさしさに おうじて ゆるめる
+      const sc  = clamp((180-deg)/(180-th), 0, 1);
+      return {ok: deg < th, score:sc, miss:'もうすこし ひざ を まげて！'};
+    },
+    guide(ctx,b){
+      if(!b.hipMid||!b.ankMid) return;
+      const u=b.unit;
+      ctx.save();
+      ctx.globalAlpha=0.5+0.45*Math.sin(now()*4);
+      ctx.strokeStyle='rgba(78,203,113,.95)'; ctx.lineWidth=Math.max(6,u*0.11); ctx.lineCap='round';
+      arrow(ctx, b.hipMid.x, b.hipMid.y+0.15*u, b.hipMid.x, b.hipMid.y+0.95*u, u*0.13);
+      ctx.restore();
+      ring(ctx, b.hipMid.x, b.ankMid.y-0.95*u, 0.5*u, b.hipMid, true);
+    }
+  },
+
+  /* ================= ここから さらに 追加ぶん ========================== */
+
+  maenarae:{
+    name:'まえならえ', emoji:'➡️', color:'#56b9ff',
+    call:'つぎは、まえ ならえ！',
+    chant:['まえ','な','ら','え'],
+    notes:[440,440,523.25,587.33],
+    hint:'りょううで を まえ に まっすぐ！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit;
+      const s=[b.shL,b.shR].sort((a,c)=>a.x-c.x);
+      const w=[b.P[15],b.P[16]].sort((a,c)=>a.x-c.x);
+      // 「かた の たかさ」を きちんと みる（うでを おろした しせい と わけるため、
+      // たてほうこう は ひかえめに しか ゆるめない）
+      const vTh = u*(0.45 + (tol-1)*0.12);
+      const good = (wr,sh)=> Math.abs(wr.y-sh.y) < vTh &&
+                             Math.abs(wr.x-sh.x) < 0.58*u*tol;
+      const okA=good(w[0],s[0]), okB=good(w[1],s[1]);
+      const sc=(okA?0.5:0)+(okB?0.5:0);
+      return {ok:okA&&okB, score:sc,
+              miss: sc>0?'もう かたほう も まえ に！':'おてて を まえ に だそう！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      const s=[b.shL,b.shR].sort((a,c)=>a.x-c.x);
+      const w=[b.P[15],b.P[16]].sort((a,c)=>a.x-c.x);
+      ring(ctx, s[0].x+0.12*u, s[0].y+0.05*u, 0.40*u, w[0]);
+      ring(ctx, s[1].x-0.12*u, s[1].y+0.05*u, 0.40*u, w[1]);
+    }
+  },
+
+  guts:{
+    name:'ちからこぶ', emoji:'💪', color:'#4ecb71',
+    call:'つぎは、ちから こぶ！',
+    chant:['ム','キ','ム','キ'],
+    notes:[261.63,329.63,392,523.25],
+    hint:'ひじ を まげて こぶし を あげよう！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit;
+      const ok1=(w,el)=>{
+        const h = w.y > b.shMid.y-0.95*u && w.y < b.shMid.y+0.30*u*tol;   // こぶしが かたの あたり
+        if(!h) return false;
+        if(!el || el.v<0.3) return true;
+        return el.y > w.y + 0.06*u/tol;                                    // ひじが したに ある
+      };
+      const okL=ok1(b.P[15],b.P[13]), okR=ok1(b.P[16],b.P[14]);
+      const sc=(okL?0.5:0)+(okR?0.5:0);
+      return {ok:okL&&okR, score:sc,
+              miss: sc>0?'もう かたほう も ムキッ！':'ひじ を まげて こぶし を あげて！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      const s=[b.shL,b.shR].sort((a,c)=>a.x-c.x);
+      const w=[b.P[15],b.P[16]].sort((a,c)=>a.x-c.x);
+      ring(ctx, s[0].x+0.05*u, s[0].y-0.25*u, 0.40*u, w[0]);
+      ring(ctx, s[1].x-0.05*u, s[1].y-0.25*u, 0.40*u, w[1]);
+    }
+  },
+
+  pachi:{
+    name:'パチパチ', emoji:'👏', color:'#ffd93d',
+    call:'つぎは、パチパチ！ はくしゅ',
+    chant:['パ','チ','パ','チ'],
+    notes:[659.25,880,659.25,880],
+    hint:'むね の まえ で おてて を パチン！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit, l=b.P[15], r=b.P[16];
+      const near = Math.hypot(l.x-r.x, l.y-r.y) < 0.58*u*tol;
+      const band = w => w.y > b.shMid.y-0.85*u*tol && w.y < b.shMid.y+1.30*u*tol;
+      const inb = band(l)&&band(r);
+      const sc=(near?0.6:0)+(inb?0.4:0);
+      return {ok:near&&inb, score:sc,
+              miss: inb?'おてて を ぴったり あわせて パチン！':'むね の まえ で あわせよう！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      const cx=b.shMid.x, cy=b.shMid.y+0.35*u;
+      const l=b.P[15], r=b.P[16];
+      const mid={x:(l.x+r.x)/2, y:(l.y+r.y)/2};
+      ring(ctx, cx, cy, 0.55*u, mid, true);
+    }
+  },
+
+  penguin:{
+    name:'ペンギン', emoji:'🐧', color:'#56b9ff',
+    call:'つぎは、ペンギン！ ぱたぱた',
+    chant:['ペン','ギン','ぱた','ぱた'],
+    notes:[329.63,392,329.63,261.63],
+    hint:'おてて を したで そと に ぱたぱた！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit;
+      const s=[b.shL,b.shR].sort((a,c)=>a.x-c.x);
+      const w=[b.P[15],b.P[16]].sort((a,c)=>a.x-c.x);
+      const low = q => q.y > b.shMid.y + 0.70*u/tol;
+      const okA = low(w[0]) && (s[0].x-w[0].x) > 0.45*u/tol;
+      const okB = low(w[1]) && (w[1].x-s[1].x) > 0.45*u/tol;
+      const sc=(okA?0.5:0)+(okB?0.5:0);
+      return {ok:okA&&okB, score:sc,
+              miss: sc>0?'もう かたほう も そと に！':'おてて を したで そと に ひらこう！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      const s=[b.shL,b.shR].sort((a,c)=>a.x-c.x);
+      const w=[b.P[15],b.P[16]].sort((a,c)=>a.x-c.x);
+      ring(ctx, s[0].x-0.55*u, s[0].y+1.25*u, 0.40*u, w[0]);
+      ring(ctx, s[1].x+0.55*u, s[1].y+1.25*u, 0.40*u, w[1]);
+    }
+  },
+
+  baibai:{
+    name:'バイバイ', emoji:'👋', color:'#ffd93d',
+    call:'つぎは、バイバイ！ おてて を ふって',
+    chant:['バイ','バイ','バイ','バイ'],
+    notes:[659.25,783.99,659.25,783.99],
+    hint:'かたほう の おてて を あげて ふりふり！',
+    judge(b,tol){
+      if(!b.vis(15)||!b.vis(16)) return {ok:false,score:0,miss:'おてて が みえないよ'};
+      const u=b.unit;
+      const up = w => w.y < b.headY + 0.25*u*tol;
+      const need = 0.15/tol;
+      const okL = up(b.P[15]) && b.wave[0] > need;
+      const okR = up(b.P[16]) && b.wave[1] > need;
+      const anyUp = up(b.P[15])||up(b.P[16]);
+      const sc = (okL||okR)?1:(anyUp?0.6:0);
+      return {ok:okL||okR, score:sc,
+              miss: anyUp? 'あげた おてて を ふりふり してね！' : 'おてて を たかく あげよう！'};
+    },
+    guide(ctx,b){
+      const u=b.unit, y=b.headY-0.40*u;
+      ring(ctx, b.nose.x-0.80*u, y, 0.40*u, b.P[16]);
+      ring(ctx, b.nose.x+0.80*u, y, 0.40*u, b.P[15]);
+    }
+  },
+
+  kubi:{
+    name:'こてん', emoji:'🙃', color:'#b28dff',
+    call:'つぎは、こてん！ くび を かしげて',
+    chant:['こ','て','ん','ね'],
+    notes:[523.25,466.16,415.3,466.16],
+    hint:'あたま を よこ に こてん と かしげて！',
+    judge(b,tol){
+      const u=b.unit;
+      if(!b.vis(7)||!b.vis(8)) return {ok:false,score:0,miss:'かお が うつるように してね'};
+      const d = Math.abs(b.P[7].y-b.P[8].y) / (0.12*u/tol);
+      const sc = clamp(d,0,1);
+      return {ok: sc>=1, score:sc, miss:'もうすこし あたま を かたむけて！'};
+    },
+    guide(ctx,b){
+      const u=b.unit;
+      ctx.save();
+      ctx.globalAlpha=0.5+0.45*Math.sin(now()*4);
+      ctx.strokeStyle='rgba(178,141,255,.95)'; ctx.lineWidth=Math.max(6,u*0.1); ctx.lineCap='round';
+      ctx.beginPath(); ctx.arc(b.nose.x, b.nose.y, 0.95*u, Math.PI*1.20, Math.PI*1.80); ctx.stroke();
+      arrow(ctx, b.nose.x+0.55*u, b.headY-0.62*u, b.nose.x+0.92*u, b.headY-0.38*u, u*0.12);
+      ctx.restore();
+    }
+  },
+
+  ashi:{
+    name:'あしパッ', emoji:'🤸', color:'#ffa53c', legs:true,
+    call:'つぎは、あし を パッ と ひらこう！',
+    chant:['あし','を','パ','ッ'],
+    notes:[392,440,523.25,659.25],
+    hint:'あし を おおきく よこ に ひらいて！',
+    judge(b,tol){
+      const u=b.unit;
+      const pair = (b.vis(27)&&b.vis(28)) ? [b.P[27],b.P[28]]
+                 : (b.vis(25)&&b.vis(26)) ? [b.P[25],b.P[26]] : null;
+      if(!pair) return {ok:false,score:0,miss:'あし が うつるように さがってね'};
+      // かたはば より あきらかに ひろいか、で みる（その子 じしん の はばが きじゅん）
+      const d = Math.abs(pair[0].x-pair[1].x) / (b.shW*1.5/tol);
+      const sc = clamp(d,0,1);
+      return {ok: sc>=1, score:sc, miss:'もうすこし おおきく ひらこう！'};
+    },
+    guide(ctx,b){
+      if(!b.vis(27)||!b.vis(28)) return;
+      const u=b.unit;
+      const a=[b.P[27],b.P[28]].sort((p,q)=>p.x-q.x);
+      const cx=(a[0].x+a[1].x)/2, y=(a[0].y+a[1].y)/2;
+      ring(ctx, cx-0.75*u, y, 0.42*u, a[0], true);
+      ring(ctx, cx+0.75*u, y, 0.42*u, a[1], true);
+    }
+  },
+
+  jump:{
+    name:'ジャンプ', emoji:'🦘', color:'#4ecb71', legs:true, instant:true,
+    call:'つぎは、ジャンプ！ ぴょーん',
+    chant:['し','ゃ','が','ジャンプ！'],
+    notes:[261.63,329.63,392,880],
+    hint:'ひざ を まげて ぴょーん と とんで！',
+    judge(b,tol){
+      if(!b.hipMid) return {ok:false,score:0,miss:'こし が うつるように さがってね'};
+      const need = 0.26/tol;
+      const sc = clamp(b.jump/need, 0, 1);
+      return {ok: b.jump > need, score:sc, miss:'ひざ を まげて ぴょーん！'};
+    },
+    guide(ctx,b){
+      if(!b.hipMid) return;
+      const u=b.unit;
+      ctx.save();
+      ctx.globalAlpha=0.5+0.45*Math.sin(now()*5);
+      ctx.strokeStyle='rgba(78,203,113,.95)'; ctx.lineWidth=Math.max(6,u*0.12); ctx.lineCap='round';
+      arrow(ctx, b.hipMid.x, b.hipMid.y+0.55*u, b.hipMid.x, b.hipMid.y-0.55*u, u*0.16);
+      ctx.restore();
+    }
   }
 };
-const POSE_IDS = Object.keys(POSES);
+
+/* ---- ポーズの ならびかた（せってい がめん の じゅんばん） ---- */
+/* すわったままでも できる ポーズ（いす・車いす でも OK）：からだの うえ半分だけ */
+const ARM_POSES = ['usagi','banzai','maru','batsu','hikouki','maenarae',
+                   'guts','kirakira','hai','baibai','kata','pachi','taiko',
+                   'penguin','atama','hoppe','heso','hiza','kubi','ojigi',
+                   'fune','kiotsuke','bunbun','freeze'];
+/* ぜんしんが うつる ばしょ で あそぶ ポーズ */
+const LEG_POSES = ['kataashi','ashi','kaeru','daiji','jump'];
+const POSE_IDS  = ARM_POSES.concat(LEG_POSES);
+// はじめから えらばれている、わかりやすい ポーズ
+const EASY_POSES = ['usagi','banzai','hikouki','kirakira','kata','pachi',
+                    'taiko','hai','baibai','freeze'];
 
 /* =========================================================================
    5. キャンバス／カメラ
@@ -531,7 +1327,7 @@ function toCanvas(l, fit){
 /* =========================================================================
    6. 体のデータづくり（判定用）
    ========================================================================= */
-const KEY = [0,7,8,11,12,13,14,15,16,23,24];
+const KEY = [0,7,8,11,12,13,14,15,16,23,24,25,26,27,28];
 let history = [];      // 静止判定用の履歴
 function buildBody(lm, fit){
   const P = {};
@@ -545,10 +1341,12 @@ function buildBody(lm, fit){
   const shL=P[11], shR=P[12];
   const shMid = {x:(shL.x+shR.x)/2, y:(shL.y+shR.y)/2};
   const shW = Math.hypot(shL.x-shR.x, shL.y-shR.y);
+  // 腰・ひざ・足首（見えているときだけ。いすに すわっている ときは null）
+  const mid = (a,b)=> (vis(a)&&vis(b)) ? {x:(P[a].x+P[b].x)/2, y:(P[a].y+P[b].y)/2} : null;
+  const hipMid = mid(23,24), kneeMid = mid(25,26), ankMid = mid(27,28);
   let unit;
-  if(vis(23)&&vis(24)){
-    const hip={x:(P[23].x+P[24].x)/2, y:(P[23].y+P[24].y)/2};
-    unit = Math.hypot(shMid.x-hip.x, shMid.y-hip.y);
+  if(hipMid){
+    unit = Math.hypot(shMid.x-hipMid.x, shMid.y-hipMid.y);
     if(unit < shW*0.7) unit = shW*1.15;     // 上半身が潰れて見えるときの保険
   }else{
     unit = shW*1.2;                          // 腰が映っていないときは肩幅から推定
@@ -556,11 +1354,32 @@ function buildBody(lm, fit){
   if(!(unit>8)) unit = Math.max(shW, CH*0.15);
   const headY = (vis(7)&&vis(8)) ? (P[7].y+P[8].y)/2 : (P[0] ? P[0].y : shMid.y-unit*0.6);
 
-  // --- 動きの量（フリーズ判定用） ---
+  // --- 動きの量（フリーズ・ジャンプ・てふり の はんてい用） ---
   const t = now();
-  history.push({t, pts:[P[0],P[15],P[16],P[11],P[12]].map(p=>p?{x:p.x,y:p.y}:null)});
-  while(history.length && t-history[0].t > 1.0) history.shift();
+  history.push({t, pts:[P[0],P[15],P[16],P[11],P[12]].map(p=>p?{x:p.x,y:p.y}:null),
+                hip: hipMid?{x:hipMid.x,y:hipMid.y}:null});
+  while(history.length && t-history[0].t > 1.6) history.shift();
   let motion=null, stillTime=0;
+
+  // ジャンプ：この 1.4びょう で いちばん ひくかった こし の いち との さ
+  let jump = 0;
+  if(hipMid){
+    let low = -1e9;
+    for(const h of history) if(h.hip && t-h.t < 1.4) low = Math.max(low, h.hip.y);
+    if(low > -1e8) jump = (low - hipMid.y)/unit;
+  }
+  // てふり（バイバイ）：この 0.8びょう で てくび が よこに うごいた はば
+  const wave=[0,0];
+  const w2 = history.filter(h=>t-h.t<0.8);
+  if(w2.length>=4){
+    [1,2].forEach((k,i)=>{
+      let mn=1e9,mx=-1e9,c=0;
+      for(const h of w2){ const p=h.pts[k]; if(!p) continue;
+        mn=Math.min(mn,p.x); mx=Math.max(mx,p.x); c++; }
+      if(c>=3) wave[i]=(mx-mn)/unit;
+    });
+  }
+
   const win = history.filter(h=>t-h.t<0.6);
   if(win.length>=5){
     let sum=0, n=0;
@@ -574,7 +1393,8 @@ function buildBody(lm, fit){
     if(n) motion = sum/n;
     stillTime = t - (history[0] ? history[0].t : t);
   }
-  return { P, vis, shL, shR, shMid, shW, unit, headY, nose:P[0]||shMid, motion, stillTime };
+  return { P, vis, shL, shR, shMid, shW, unit, headY, nose:P[0]||shMid,
+           hipMid, kneeMid, ankMid, motion, stillTime, jump, wave };
 }
 
 /* =========================================================================
@@ -589,8 +1409,13 @@ const G = {
   landmarks:null, lastLm:0, body:null,
   charPose:'idle', mood:'normal', pop:0,
   cx:0, cy:0, cs:0, tx:0, ty:0, ts:0,
-  particles:[], lastPoseId:null
+  particles:[], lastPoseId:null, hintAt:0,
+  log:[]            // 1かい ごとの きろく {id, ok}
 };
+function activePoses(){
+  const list = (SET.poses||EASY_POSES).filter(p=>POSES[p]);
+  return list.length ? list : EASY_POSES.slice();
+}
 const READY_B = 4, CALL_B = 4, RESULT_B = 4;
 const roundLen = ()=> READY_B + CALL_B + SET.waitBeats + RESULT_B;
 const beatDur  = ()=> 60/SET.bpm;
@@ -601,17 +1426,14 @@ function phaseOf(rb){
   if(rb < READY_B+CALL_B+SET.waitBeats) return 'resp';
   return 'result';
 }
-function activePoses(){
-  const list = SET.poses.filter(p=>POSES[p]);
-  return list.length ? list : POSE_IDS.slice();
-}
 
 /* =========================================================================
    8. HUD 操作
    ========================================================================= */
 const elBig=$('#bigText'), elChant=$('#chant'), elDots=$('#dots'),
       elHint=$('#hint'), elPoseName=$('#poseName'), elPoseChip=$('#poseChip'),
-      elStar=$('#starNum'), elFlash=$('#flash'), elDone=$('#doneBtn');
+      elStar=$('#starNum'), elFlash=$('#flash'), elDone=$('#doneBtn'),
+      elRound=$('#roundNum');
 
 function bigText(txt, color='#fff'){
   elBig.textContent = txt; elBig.style.color = color;
@@ -639,10 +1461,11 @@ function startRound(){
   let id = pick(list);
   if(list.length>1 && id===G.lastPoseId) id = pick(list.filter(p=>p!==G.lastPoseId));
   G.lastPoseId=id; G.poseId=id; G.pose=POSES[id];
-  G.result=null; G.best=0; G.hold=0; G.shown=false; G.mood='normal';
+  G.result=null; G.best=0; G.hold=0; G.shown=false; G.mood='normal'; G.hintAt=0;
   elPoseName.textContent = G.pose.name;
   elPoseChip.querySelector('.em').textContent = G.pose.emoji;
   elHint.textContent = G.pose.hint;
+  elRound.textContent = (G.plays+1)+' / '+SET.rounds;
 }
 
 function onBeat(gb, tAudio){
@@ -703,6 +1526,12 @@ function onBeat(gb, tAudio){
     if(G.result==='ok'){
       tone([523.25,659.25,783.99,1046.5][i%4], tAudio, 0.2, 'triangle', 0.16);
     }
+    // このラウンドの おわり。きめた かいすう に とどいたら おしまい
+    if(i===RESULT_B-1){
+      G.log.push({id:G.poseId, ok:G.result==='ok'});
+      G.plays++;
+      if(G.plays >= SET.rounds){ G.running=false; setTimeout(showSummary, 700); }
+    }
   }
 }
 
@@ -746,7 +1575,17 @@ function judgeTick(){
   if(!G.body){ return; }
   const r = G.pose.judge(G.body, SET.tol);
   G.best = Math.max(G.best, r.score||0);
-  const needHold = SET.tol>=1.3 ? 3 : 5;
+  // 「おしい ところ」を その場で ことば に して つたえる
+  const t=now();
+  if(r.miss && !r.ok && t-G.hintAt > 1.2){
+    G.hintAt = t;
+    if(elHint.textContent !== r.miss) elHint.textContent = r.miss;
+  }
+  // ジャンプ のような「いっしゅん の うごき」は 1フレーム で せいりつ させる。
+  // それ いがい は、むずかしさ（なければ やさしさの あたい）で キープ時間 を きめる。
+  const needHold = G.pose.instant ? 1
+    : (LEVELS[SET.level] ? LEVELS[SET.level].hold
+                         : (SET.tol>=1.5 ? 2 : SET.tol>=1.2 ? 3 : 5));
   if(r.ok){
     G.hold++;
     if(G.hold>=needHold) finishRound(true);
@@ -832,14 +1671,186 @@ function poseFigure(pose, t, bp){
       F.wr=[[-0.65,-0.40],[0.65,-0.40]];
       F.hint='side'; break;
     case 'taiko':{                                  // 胸の前でトントン
-      const a=Math.sin(bp*Math.PI*2)*0.08;
-      F.el=[[-0.28,-0.08],[0.28,-0.08]];
-      F.wr=[[-0.10,-0.20+a],[0.10,-0.20-a]];
+      const a=Math.sin(bp*Math.PI*2)*0.09;
+      F.el=[[-0.31,-0.08],[0.31,-0.08]];
+      F.wr=[[-0.15,-0.24+a],[0.15,-0.24-a]];
       F.hint='drum'; break; }
     case 'freeze':                                  // ピタッと静止
       F.el=[[-0.21,-0.14],[0.21,-0.14]];
       F.wr=[[-0.23,0.07],[0.23,0.07]];
       F.hint='stop'; break;
+
+    case 'kirakira':{                               // 顔のよこで おてて キラキラ
+      const a=Math.sin(bp*Math.PI*4)*0.05;
+      F.el=[[-0.36,-0.44],[0.36,-0.44]];
+      F.wr=[[-0.44+a,-0.70],[0.44+a,-0.70]];
+      F.hint='twinkle'; break; }
+
+    case 'kata':{                                   // 両手を肩に トントン
+      const a=Math.sin(bp*Math.PI*2)*0.025;
+      F.el=[[-0.40,-0.10],[0.40,-0.10]];
+      F.wr=[[-0.22,-0.36+a],[0.22,-0.36-a]];
+      F.hint='shoulder'; break; }
+
+    case 'kiotsuke':                                // からだの よこに ピタッ
+      F.el=[[-0.20,-0.15],[0.20,-0.15]];
+      F.wr=[[-0.20,0.10],[0.20,0.10]];
+      F.hint='stop'; break;
+
+    case 'ojigi':{                                  // ぺこり（あたまを かた の あいだへ）
+      // 正面から見た おじぎ は「あたまが かた に しずむ」形で表す。
+      // 判定も「あたまが 肩の高さに 近づいたか」を見ているので 見た目と一致する。
+      F.head=[0,-0.42]; F.neck=[0,-0.40];
+      F.sh=[[-0.20,-0.42],[0.20,-0.42]];
+      F.el=[[-0.25,-0.16],[0.25,-0.16]];
+      F.wr=[[-0.24,0.08],[0.24,0.08]];
+      F.hint='bow'; break; }
+
+    case 'fune':{                                   // からだを よこに かたむける
+      // こし を 中心に 上半身ぜんたいを かたむける（ばらけないように）
+      const th=Math.sin(bp*Math.PI)*0.34;
+      const cx=0, cy=0.02, cs=Math.cos(th), sn=Math.sin(th);
+      const rot=q=>[cx+(q[0]-cx)*cs-(q[1]-cy)*sn, cy+(q[0]-cx)*sn+(q[1]-cy)*cs];
+      F.el=[[-0.28,-0.14],[0.28,-0.14]];
+      F.wr=[[-0.34,0.10],[0.34,0.10]];
+      F.head=rot(F.head); F.neck=rot(F.neck);
+      F.sh=F.sh.map(rot); F.el=F.el.map(rot); F.wr=F.wr.map(rot);
+      F.hint='sway'; break; }
+
+    case 'kataashi':{                               // かたあし たっち
+      const a=Math.sin(t*2)*0.015;
+      F.hip=[[-0.12,0.02],[0.12,0.02]];
+      F.knee=[[-0.13,0.30],[0.26,0.12]];
+      F.ankle=[[-0.14,0.58],[0.06,0.17+a]];         // ひざを まげて あしを あげる
+      F.el=[[-0.42,-0.34],[0.42,-0.34]];
+      F.wr=[[-0.60,-0.28],[0.60,-0.28]];            // バランスを とる ポーズ
+      F.hint='leg'; break; }
+
+    case 'kaeru':{                                  // しゃがむ
+      const d=0.30;
+      F.head=[0,-0.60+d]; F.neck=[0,-0.44+d];
+      F.sh=[[-0.18,-0.40+d],[0.18,-0.40+d]];
+      F.hip=[[-0.13,0.02+d],[0.13,0.02+d]];
+      F.knee=[[-0.27,0.24+d*0.5],[0.27,0.24+d*0.5]];
+      F.ankle=[[-0.16,0.58],[0.16,0.58]];
+      F.el=[[-0.26,-0.16+d],[0.26,-0.16+d]];
+      F.wr=[[-0.22,0.06+d],[0.22,0.06+d]];
+      F.hint='squat'; break; }
+
+    case 'banzai':                                  // りょうて を たかく
+      F.el=[[-0.30,-0.70],[0.30,-0.70]];
+      F.wr=[[-0.27,-1.06],[0.27,-1.06]];
+      F.hint='up'; break;
+
+    case 'hai':                                     // かたて を あげる
+      F.el=[[-0.31,-0.55],[0.24,-0.14]];
+      F.wr=[[-0.21,-0.92],[0.27,0.09]];
+      F.hint='oneup'; break;
+
+    case 'maru':                                    // あたまの うえで まる
+      F.el=[[-0.38,-0.56],[0.38,-0.56]];
+      F.wr=[[-0.07,-0.96],[0.07,-0.96]];
+      F.hint='circle'; break;
+
+    case 'batsu':                                   // むねの まえで バッテン
+      F.el=[[-0.38,-0.10],[0.38,-0.10]];
+      F.wr=[[ 0.15,-0.33],[-0.15,-0.33]];           // 左右が いれかわる ＝ クロス
+      F.hint='cross'; break;
+
+    case 'atama':{                                  // あたま を ポンポン
+      const a=Math.sin(bp*Math.PI*2)*0.03;
+      F.el=[[-0.36,-0.46],[0.36,-0.46]];
+      F.wr=[[-0.11,-0.76+a],[0.11,-0.76-a]];
+      F.hint='touch'; break; }
+
+    case 'hoppe':                                   // ほっぺ に おてて
+      F.el=[[-0.36,-0.30],[0.36,-0.30]];
+      F.wr=[[-0.20,-0.58],[0.20,-0.58]];
+      F.hint='touch'; break;
+
+    case 'heso':                                    // おなか に おてて
+      F.el=[[-0.31,-0.13],[0.31,-0.13]];
+      F.wr=[[-0.09,-0.04],[0.09,-0.04]];
+      F.hint='touch'; break;
+
+    case 'hiza':{                                   // ひざ に おてて
+      const d=0.10;
+      F.head=[0,-0.60+d]; F.neck=[0,-0.44+d];
+      F.sh=[[-0.18,-0.40+d],[0.18,-0.40+d]];
+      F.knee=[[-0.15,0.28],[0.15,0.28]];
+      F.el=[[-0.28,-0.10],[0.28,-0.10]];
+      F.wr=[[-0.16,0.26],[0.16,0.26]];
+      F.hint='touch'; break; }
+
+    case 'bunbun':{                                 // いっぱい うごく
+      const a=Math.sin(t*13)*0.16, c2=Math.cos(t*11)*0.14;
+      F.el=[[-0.30+c2,-0.28+a],[0.30-c2,-0.28-a]];
+      F.wr=[[-0.46+a,-0.46-c2],[0.46-a,-0.46+c2]];
+      F.head=[a*0.35,-0.60];
+      F.hint='shake'; break; }
+
+    case 'daiji':                                   // だいの じ
+      F.el=[[-0.42,-0.62],[0.42,-0.62]];
+      F.wr=[[-0.70,-0.88],[0.70,-0.88]];
+      F.knee=[[-0.26,0.32],[0.26,0.32]];
+      F.ankle=[[-0.40,0.58],[0.40,0.58]];
+      F.hint='big'; break;
+
+    case 'maenarae':                                // まえならえ（正面からは みじかく みえる）
+      F.el=[[-0.25,-0.33],[0.25,-0.33]];
+      F.wr=[[-0.21,-0.30],[0.21,-0.30]];
+      F.hint='front'; break;
+
+    case 'guts':                                    // ちからこぶ
+      F.el=[[-0.36,-0.10],[0.36,-0.10]];
+      F.wr=[[-0.26,-0.44],[0.26,-0.44]];
+      F.hint='muscle'; break;
+
+    case 'pachi':{                                  // パチパチ（はくしゅ）
+      const a=Math.abs(Math.sin(bp*Math.PI*2))*0.09;
+      F.el=[[-0.34,-0.10],[0.34,-0.10]];
+      F.wr=[[-0.04-a,-0.28],[0.04+a,-0.28]];
+      F.hint='clap'; break; }
+
+    case 'penguin':{                                // ペンギン（したで そとに ぱたぱた）
+      const a=Math.sin(bp*Math.PI*2)*0.07;
+      F.el=[[-0.26,-0.10],[0.26,-0.10]];
+      F.wr=[[-0.46,0.06+a],[0.46,0.06-a]];
+      F.hint='flap'; break; }
+
+    case 'baibai':{                                 // バイバイ（かたてを ふる）
+      const a=Math.sin(t*9)*0.10;
+      F.el=[[-0.31,-0.55],[0.24,-0.14]];
+      F.wr=[[-0.21+a,-0.92],[0.27,0.09]];
+      F.hint='wave'; break; }
+
+    case 'kubi':{                                   // こてん（くびを かしげる）
+      const a=Math.sin(bp*Math.PI)*0.26;
+      F.head=[a*0.42,-0.58+Math.abs(a)*0.05];
+      F.neck=[a*0.12,-0.44];
+      F.hint='tiltHead'; break; }
+
+    case 'ashi':                                    // あし を パッ と ひらく
+      F.knee=[[-0.26,0.30],[0.26,0.30]];
+      F.ankle=[[-0.42,0.58],[0.42,0.58]];
+      F.el=[[-0.24,-0.14],[0.24,-0.14]];
+      F.wr=[[-0.30,0.08],[0.30,0.08]];
+      F.hint='legsOut'; break;
+
+    case 'jump':{                                   // ジャンプ（しゃがむ→とぶ）
+      const ph=bp;                                   // 0→1 の あいだで しゃがんで とぶ
+      const air = ph<0.5 ? 0 : Math.sin((ph-0.5)*Math.PI*2)*0.30;
+      const sq  = ph<0.5 ? Math.sin(ph*Math.PI*2)*0.16 : 0;
+      const d = sq - air;
+      F.head=[0,-0.60+d]; F.neck=[0,-0.44+d];
+      F.sh=[[-0.18,-0.40+d],[0.18,-0.40+d]];
+      F.hip=[[-0.12,0.02+d],[0.12,0.02+d]];
+      F.knee=[[-0.16,0.30+d*0.4],[0.16,0.30+d*0.4]];
+      F.ankle=[[-0.14,0.58-air*0.9],[0.14,0.58-air*0.9]];
+      F.el=[[-0.28,-0.16+d],[0.28,-0.16+d]];
+      F.wr=[[-0.30,0.06+d],[0.30,0.06+d]];
+      F.hint='jump'; break; }
+
     default:{                                       // 待機（ゆらゆら）
       const a=Math.sin(t*3)*0.02;
       F.el=[[-0.23,-0.15+a],[0.23,-0.15-a]];
@@ -874,25 +1885,186 @@ function arrow(c,x1,y1,x2,y2,h){
 function drawHint(c,F,s,accent,t){
   if(!F.hint) return;
   const pulse=0.5+0.5*Math.sin(t*4);
-  c.save(); c.globalAlpha=0.35+0.5*pulse;
-  c.strokeStyle=accent; c.lineWidth=0.04*s; c.lineCap='round';
+  const HI='#2f3b52';                       // やじるしは こい いろ ＋ 白フチ で めだつように
+  // 白フチ → 本体 の じゅんに 2ど かく
+  const arrow2=(x1,y1,x2,y2,h)=>{
+    c.lineCap='round'; c.lineJoin='round';
+    c.strokeStyle='rgba(255,255,255,.95)'; c.lineWidth=0.085*s; arrow(c,x1,y1,x2,y2,h);
+    c.strokeStyle=HI;                       c.lineWidth=0.045*s; arrow(c,x1,y1,x2,y2,h);
+  };
+  c.save(); c.globalAlpha=0.45+0.55*pulse;
   if(F.hint==='up'){
     for(let i=0;i<2;i++){
-      const x=F.wr[i][0]*s + (i===0?-1:1)*0.15*s, y=F.wr[i][1]*s;
-      arrow(c, x, y+0.22*s, x, y+0.02*s, 0.05*s);
+      const x=F.wr[i][0]*s + (i===0?-1:1)*0.17*s, y=F.wr[i][1]*s;
+      arrow2(x, y+0.24*s, x, y+0.02*s, 0.05*s);
     }
   }else if(F.hint==='side'){
     for(let i=0;i<2;i++){
       const sgn=(i===0?-1:1), x=F.wr[i][0]*s, y=F.wr[i][1]*s;
-      arrow(c, x+sgn*0.06*s, y, x+sgn*0.18*s, y, 0.05*s);
+      arrow2(x+sgn*0.08*s, y, x+sgn*0.21*s, y, 0.05*s);
     }
   }else if(F.hint==='drum'){
+    // むね の まえ の「たいこ」と、トントン と たたく やじるし
+    const dy=-0.03*s;
+    c.globalAlpha=1;
+    c.fillStyle='#7c5236'; c.strokeStyle='#ffffff'; c.lineWidth=0.035*s;
+    rrPath(c,-0.24*s,dy,0.48*s,0.115*s,0.057*s); c.fill(); c.stroke();
+    c.fillStyle='rgba(255,255,255,.35)';
+    rrPath(c,-0.21*s,dy+0.018*s,0.42*s,0.03*s,0.015*s); c.fill();
+    // たたいた ところ の「トン！」の しるし（ひくい ほうの てだけ ひかる）
+    c.lineCap='round'; c.strokeStyle=HI; c.lineWidth=0.032*s;
     for(let i=0;i<2;i++){
       const x=F.wr[i][0]*s, y=F.wr[i][1]*s;
-      c.beginPath(); c.moveTo(x-0.09*s,y+0.12*s); c.lineTo(x+0.09*s,y+0.12*s); c.stroke();
-      c.beginPath(); c.moveTo(x-0.06*s,y+0.19*s); c.lineTo(x+0.06*s,y+0.19*s); c.stroke();
+      const near=clamp(1-(dy-y)/(0.24*s),0,1);     // 手が たいこに ちかいほど こく
+      c.globalAlpha=near*near;
+      for(const a of [-0.9,0,0.9]){
+        c.beginPath();
+        c.moveTo(x+Math.sin(a)*0.05*s, dy-0.02*s-Math.cos(a)*0.05*s);
+        c.lineTo(x+Math.sin(a)*0.10*s, dy-0.02*s-Math.cos(a)*0.10*s);
+        c.stroke();
+      }
     }
+  }else if(F.hint==='twinkle'){
+    // おてて の まわりで きらめく ☆
+    c.globalAlpha=1; c.fillStyle=accent;
+    for(let i=0;i<2;i++){
+      const x=F.wr[i][0]*s, y=F.wr[i][1]*s;
+      for(let k=0;k<3;k++){
+        const a=t*3+k*2.1+i, r=(0.13+0.03*Math.sin(t*7+k))*s;
+        c.globalAlpha=0.35+0.55*(0.5+0.5*Math.sin(t*6+k*2+i));
+        star(c, x+Math.cos(a)*r, y+Math.sin(a)*r, 0.045*s);
+      }
+    }
+  }else if(F.hint==='shoulder'){
+    // かた を たたく「ポン」の しるし
+    c.globalAlpha=0.4+0.55*pulse; c.strokeStyle=HI; c.lineWidth=0.03*s; c.lineCap='round';
+    for(let i=0;i<2;i++){
+      const x=F.wr[i][0]*s, y=F.wr[i][1]*s-0.11*s;
+      for(const r of [0.06,0.11]){
+        c.beginPath(); c.arc(x, y, r*s, Math.PI*1.18, Math.PI*1.82); c.stroke();
+      }
+    }
+  }else if(F.hint==='bow'){
+    // あたま の うえに「ぺこり」の カーブ
+    c.globalAlpha=0.45+0.55*pulse;
+    c.strokeStyle='rgba(255,255,255,.95)'; c.lineWidth=0.085*s; c.lineCap='round';
+    const arc=()=>{ c.beginPath(); c.arc(0,-0.46*s,0.30*s,Math.PI*1.15,Math.PI*1.85); c.stroke(); };
+    arc(); c.strokeStyle=HI; c.lineWidth=0.045*s; arc();
+    arrow2(0.30*s, -0.62*s, 0.30*s, -0.34*s, 0.05*s);
+  }else if(F.hint==='sway'){
+    c.globalAlpha=0.45+0.55*pulse;
+    const y=-0.22*s;
+    arrow2(-0.50*s, y, -0.82*s, y+0.14*s, 0.06*s);
+    arrow2( 0.50*s, y,  0.82*s, y+0.14*s, 0.06*s);
+  }else if(F.hint==='oneup'){
+    // あげている ほうの て だけ ○ と やじるし
+    c.globalAlpha=0.45+0.55*pulse;
+    const i = (F.wr[0][1] < F.wr[1][1]) ? 0 : 1;
+    const x=F.wr[i][0]*s + (i===0?-1:1)*0.17*s, y=F.wr[i][1]*s;
+    arrow2(x, y+0.26*s, x, y+0.02*s, 0.05*s);
+  }else if(F.hint==='circle'){
+    // あたま の うえの ○
+    c.globalAlpha=0.45+0.5*pulse;
+    c.strokeStyle='rgba(255,255,255,.95)'; c.lineWidth=0.10*s;
+    c.beginPath(); c.arc(0,-1.02*s,0.24*s,0,Math.PI*2); c.stroke();
+    c.strokeStyle=accent; c.lineWidth=0.055*s;
+    c.beginPath(); c.arc(0,-1.02*s,0.24*s,0,Math.PI*2); c.stroke();
+  }else if(F.hint==='cross'){
+    // むね の まえの ✕
+    c.globalAlpha=0.4+0.5*pulse; c.lineCap='round';
+    const X=()=>{ c.beginPath();
+      c.moveTo(-0.26*s,-0.50*s); c.lineTo(0.26*s,-0.14*s);
+      c.moveTo( 0.26*s,-0.50*s); c.lineTo(-0.26*s,-0.14*s); c.stroke(); };
+    c.strokeStyle='rgba(255,255,255,.95)'; c.lineWidth=0.11*s; X();
+    c.strokeStyle=accent; c.lineWidth=0.06*s; X();
+  }else if(F.hint==='touch'){
+    // さわる ばしょ を ○ で しめす
+    c.globalAlpha=0.4+0.55*pulse; c.strokeStyle=HI; c.lineWidth=0.032*s; c.lineCap='round';
+    for(let i=0;i<2;i++){
+      const x=F.wr[i][0]*s, y=F.wr[i][1]*s;
+      c.beginPath(); c.arc(x, y, 0.135*s, 0, Math.PI*2); c.stroke();
+    }
+  }else if(F.hint==='shake'){
+    // うごき の せん
+    c.globalAlpha=0.35+0.6*pulse; c.strokeStyle=HI; c.lineWidth=0.038*s; c.lineCap='round';
+    for(const sgn of [-1,1]){
+      for(let i=0;i<3;i++){
+        const x=sgn*(0.62+i*0.13)*s, y=(-0.52+i*0.30)*s;
+        c.beginPath(); c.moveTo(x,y-0.11*s); c.lineTo(x,y+0.11*s); c.stroke();
+      }
+    }
+  }else if(F.hint==='big'){
+    c.globalAlpha=0.45+0.55*pulse;
+    for(const [dx,dy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){
+      arrow2(dx*0.50*s, dy*0.30*s-0.10*s, dx*0.85*s, dy*0.62*s-0.10*s, 0.055*s);
+    }
+  }else if(F.hint==='front'){
+    // まえ（カメラ の ほう）へ のばす
+    c.globalAlpha=0.45+0.55*pulse; c.lineCap='round';
+    for(let i=0;i<2;i++){
+      const x=F.wr[i][0]*s, y=F.wr[i][1]*s;
+      c.strokeStyle='rgba(255,255,255,.95)'; c.lineWidth=0.075*s;
+      c.beginPath(); c.arc(x,y,0.15*s,0,Math.PI*2); c.stroke();
+      c.strokeStyle=HI; c.lineWidth=0.04*s;
+      c.beginPath(); c.arc(x,y,0.15*s,0,Math.PI*2); c.stroke();
+      c.beginPath(); c.arc(x,y,0.06*s,0,Math.PI*2); c.stroke();
+    }
+  }else if(F.hint==='muscle'){
+    c.globalAlpha=0.45+0.55*pulse;
+    for(let i=0;i<2;i++){
+      const x=F.wr[i][0]*s, y=F.wr[i][1]*s;
+      arrow2(x+(i===0?-0.20:0.20)*s, y+0.22*s, x+(i===0?-0.20:0.20)*s, y-0.02*s, 0.05*s);
+    }
+  }else if(F.hint==='clap'){
+    // てのひら が あう ところ に キラッ
+    c.globalAlpha=1; c.fillStyle=accent;
+    for(let k=0;k<4;k++){
+      const a=t*4+k*1.57, r=(0.16+0.04*Math.sin(t*9))*s;
+      c.globalAlpha=0.3+0.6*(0.5+0.5*Math.sin(t*8+k*1.6));
+      star(c, Math.cos(a)*r, -0.28*s+Math.sin(a)*r*0.8, 0.045*s);
+    }
+  }else if(F.hint==='flap'){
+    c.globalAlpha=0.45+0.55*pulse;
+    for(let i=0;i<2;i++){
+      const sgn=(i===0?-1:1), x=F.wr[i][0]*s, y=F.wr[i][1]*s;
+      arrow2(x+sgn*0.09*s, y-0.10*s, x+sgn*0.17*s, y+0.14*s, 0.05*s);
+    }
+  }else if(F.hint==='wave'){
+    // ふっている て の りょうわきに ゆれの せん
+    c.globalAlpha=0.35+0.6*pulse; c.strokeStyle=HI; c.lineWidth=0.036*s; c.lineCap='round';
+    const x=F.wr[0][0]*s, y=F.wr[0][1]*s;
+    for(const sgn of [-1,1]){
+      for(let i=0;i<2;i++){
+        const px=x+sgn*(0.17+i*0.11)*s;
+        c.beginPath(); c.moveTo(px,y-0.09*s); c.lineTo(px,y+0.09*s); c.stroke();
+      }
+    }
+  }else if(F.hint==='tiltHead'){
+    c.globalAlpha=0.45+0.55*pulse;
+    const dir = F.head[0]>=0 ? 1 : -1;
+    c.strokeStyle='rgba(255,255,255,.95)'; c.lineWidth=0.085*s; c.lineCap='round';
+    const arc=()=>{ c.beginPath(); c.arc(0,-0.46*s,0.42*s,
+      dir>0?Math.PI*1.30:Math.PI*1.45, dir>0?Math.PI*1.72:Math.PI*1.86); c.stroke(); };
+    arc(); c.strokeStyle=HI; c.lineWidth=0.045*s; arc();
+  }else if(F.hint==='legsOut'){
+    c.globalAlpha=0.45+0.55*pulse;
+    arrow2(-0.30*s, 0.52*s, -0.60*s, 0.58*s, 0.055*s);
+    arrow2( 0.30*s, 0.52*s,  0.60*s, 0.58*s, 0.055*s);
+  }else if(F.hint==='jump'){
+    c.globalAlpha=0.45+0.55*pulse;
+    arrow2(0.46*s, 0.28*s, 0.46*s, -0.28*s, 0.07*s);
+  }else if(F.hint==='leg'){
+    // あげている ほうの あし を ○ で かこむ
+    c.globalAlpha=0.45+0.55*pulse; c.strokeStyle=HI; c.lineWidth=0.042*s;
+    c.beginPath(); c.arc(F.ankle[1][0]*s, F.ankle[1][1]*s, 0.16*s, 0, Math.PI*2); c.stroke();
+    arrow2(F.ankle[1][0]*s+0.26*s, F.ankle[1][1]*s+0.24*s,
+           F.ankle[1][0]*s+0.26*s, F.ankle[1][1]*s-0.02*s, 0.05*s);
+  }else if(F.hint==='squat'){
+    c.globalAlpha=0.45+0.55*pulse;
+    arrow2(-0.42*s, -0.30*s, -0.42*s, 0.02*s, 0.05*s);
+    arrow2( 0.42*s, -0.30*s,  0.42*s, 0.02*s, 0.05*s);
   }else if(F.hint==='stop'){
+    c.strokeStyle=accent; c.lineWidth=0.05*s; c.lineCap='round';
     c.setLineDash([0.09*s,0.07*s]); c.lineDashOffset=-t*20;
     c.beginPath(); c.ellipse(0,-0.18*s,0.50*s,0.74*s,0,0,Math.PI*2); c.stroke();
     c.setLineDash([]);
@@ -901,7 +2073,8 @@ function drawHint(c,F,s,accent,t){
 }
 function drawChar(x,y,s,pose,mood,pop,bp){
   const t=now(), c=ctx;
-  const accent=(POSES[pose] && POSES[pose].color) || '#ffa53c';
+  // まちの あいだも「つぎの ポーズ」の いろ にして、いろ でも よこく する
+  const accent=((POSES[pose] || G.pose || {}).color) || '#ffa53c';
   const DARK='#3d4a63', EDGE='#ffffff';
   c.save(); c.translate(x,y);
   // 影
@@ -1049,16 +2222,16 @@ function frame(){
 
   // --- キャラクターの位置（コール中は大きく中央、レスポンス中は隅） ---
   const small = (G.phase==='resp' || G.phase==='result');
-  G.ts = Math.min(CW,CH) * (small ? 0.22 : 0.40);
-  G.tx = small ? CW*0.27 : CW*0.5;
-  G.ty = small ? CH*0.70 : CH*0.45;
+  G.ts = Math.min(CW,CH) * (small ? 0.21 : 0.34);
+  G.tx = small ? CW*0.26 : CW*0.5;
+  G.ty = small ? CH*0.70 : CH*0.60;
   if(G.cs===0){ G.cs=G.ts; G.cx=G.tx; G.cy=G.ty; }
   const k = 1-Math.pow(0.001, dt);
   G.cs=lerp(G.cs,G.ts,k); G.cx=lerp(G.cx,G.tx,k); G.cy=lerp(G.cy,G.ty,k);
   G.pop = Math.max(0, G.pop - dt*4);
 
   // 背景パネル
-  const bw=G.cs*1.90, bh=G.cs*1.90;
+  const bw=G.cs*2.25, bh=G.cs*1.90;
   ctx.save();
   ctx.fillStyle='rgba(255,255,255,'+(small?0.58:0.80)+')';
   ctx.shadowColor='rgba(0,0,0,.18)'; ctx.shadowBlur=24; ctx.shadowOffsetY=8;
@@ -1148,29 +2321,101 @@ function fallback(msg){
 /* =========================================================================
    14. 開始・終了
    ========================================================================= */
+let lastWithCamera = false;
 async function beginGame(withCamera){
+  if(withCamera!==undefined) lastWithCamera = !!withCamera;
   $('#startScreen').classList.add('hidden');
-  G.judgeOn = !!withCamera;
-  G.running = true; G.stars=0; G.combo=0;
+  $('#resultScreen').classList.add('hidden');
+  G.judgeOn = lastWithCamera;
+  G.running = true; G.stars=0; G.combo=0; G.plays=0; G.log=[];
   elStar.textContent='0';
-  elDone.style.display = withCamera ? 'none' : 'block';
+  elRound.textContent = '1 / '+SET.rounds;
+  elDone.style.display = lastWithCamera ? 'none' : 'block';
   resize();
   initAudio();
   if(ac.state==='suspended'){ try{ await ac.resume(); }catch(e){} }
   G.t0 = ac.currentTime + 0.35;
   G.nextBeat = 0;
   try{ if('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(()=>{}); }catch(e){}
-  speak('はじめるよ！ リズムに あわせて まねっこ しよう！', 1.0, 1.25);
+  speak(SET.rounds+'かい、がんばろう！ リズムに あわせて まねっこ しよう！', 1.0, 1.25);
 }
-function quitGame(){
-  G.running=false; G.landmarks=null;
+
+/* ---- おしまい：なんかい できたか を みせる ---- */
+function showSummary(){
+  G.running=false;
   $('#settings').classList.remove('open');
+  clearChant(); setDots(0,0); elBig.classList.remove('show');
+
+  const n = G.log.filter(r=>r.ok).length, total = G.log.length || SET.rounds;
+  $('#rNum').textContent = n;
+  $('#rTotal').textContent = total;
+
+  // ★ の れつ（できた ぶん だけ ひかる）
+  $('#rStars').innerHTML =
+    G.log.map(r=> r.ok ? '⭐' : '<span style="opacity:.3">☆</span>').join('');
+
+  // ポーズごとの きろく
+  $('#rTally').innerHTML = G.log.map((r,i)=>{
+    const p = POSES[r.id] || {emoji:'❓', name:'？'};
+    return '<span class="'+(r.ok?'ok':'ng')+'">'+(i+1)+'. '+p.emoji+' '+p.name+
+           ' '+(r.ok?'⭕':'—')+'</span>';
+  }).join('');
+
+  const ratio = total ? n/total : 0;
+  let face, title, msg;
+  if(ratio>=1)        { face='🏆'; title='ぜんぶ できた！';       msg='パーフェクト！ すごいね！'; }
+  else if(ratio>=0.7) { face='🎉'; title='よく がんばりました！'; msg='たくさん できたね。はなまる！'; }
+  else if(ratio>=0.4) { face='😊'; title='がんばったね！';        msg='つぎも いっしょに やってみよう。'; }
+  else                { face='🌱'; title='さいごまで できたね！'; msg='やってみた ことが いちばん えらい！'; }
+  $('#rFace').textContent = face;
+  $('#rTitle').textContent = title;
+  $('#rMsg').textContent = msg;
+
+  $('#resultScreen').classList.remove('hidden');
+  if(ac){ const t=ac.currentTime; SFX.great(t); setTimeout(()=>burst(80), 60); }
+  speak(total+'かい ちゅう、'+n+'かい できました。'+msg, 1.0, 1.25);
+}
+
+function quitGame(){
+  $('#settings').classList.remove('open');
+  if(G.log.length){ showSummary(); return; }      // とちゅうでも きろく を みせる
+  G.running=false; G.landmarks=null;
   $('#startScreen').classList.remove('hidden');
-  $('#startScreen').querySelector('.sub').innerHTML =
-    'きょうは <b>⭐'+G.stars+'こ</b> ゲットしたよ！<br>よく がんばりました！';
   clearChant(); setDots(0,0); elBig.classList.remove('show');
   try{ speechSynthesis.cancel(); }catch(e){}
 }
+
+$('#againBtn').addEventListener('click', ()=>{
+  initAudio(); if(ac.state==='suspended') ac.resume();
+  beginGame();
+});
+$('#rSetBtn').addEventListener('click', ()=>{
+  $('#resultScreen').classList.add('hidden');
+  $('#startScreen').classList.remove('hidden');
+  G.log=[]; G.plays=0;
+  paintLevels();
+});
+
+/* ---- スタートがめん：むずかしさ と かいすう ---- */
+const elLevels=$('#levels'), elRounds=$('#roundsSel');
+Object.keys(LEVELS).forEach(k=>{
+  const b=document.createElement('button');
+  b.textContent=LEVELS[k].label; b.dataset.k=k;
+  b.addEventListener('click',()=>{ applyLevel(k); paintLevels(); syncSettingsUI(); });
+  elLevels.appendChild(b);
+});
+[5,10,20].forEach(n=>{
+  const b=document.createElement('button');
+  b.textContent=n+' かい'; b.dataset.n=n;
+  b.addEventListener('click',()=>{ SET.rounds=n; saveSet(); paintLevels(); });
+  elRounds.appendChild(b);
+});
+function paintLevels(){
+  [...elLevels.children].forEach(b=> b.classList.toggle('on', b.dataset.k===SET.level));
+  [...elRounds.children].forEach(b=> b.classList.toggle('on', +b.dataset.n===SET.rounds));
+  const L=LEVELS[SET.level]; if(L) $('#levelNote').textContent=L.note;
+}
+paintLevels();
 
 $('#startBtn').addEventListener('click', ()=>{
   initAudio(); if(ac.state==='suspended') ac.resume();
@@ -1198,38 +2443,78 @@ $('#gear').addEventListener('click', toggleSettings);
 $('#closeSet').addEventListener('click', ()=>{ $('#settings').classList.remove('open'); });
 $('#quitBtn').addEventListener('click', quitGame);
 
-function segInit(sel, key, cast){
+const segPaint=[];
+function segInit(sel, key, cast, isLevelPart){
   const box=$(sel);
   const paint=()=>{ [...box.children].forEach(b=> b.classList.toggle('on', cast(b.dataset.v)===SET[key]) ); };
-  [...box.children].forEach(b=> b.addEventListener('click', ()=>{ SET[key]=cast(b.dataset.v); saveSet(); paint(); }));
-  paint();
+  [...box.children].forEach(b=> b.addEventListener('click', ()=>{
+    SET[key]=cast(b.dataset.v);
+    if(isLevelPart){                       // むずかしさ に かかわる こうもく を
+      SET.level='custom';                  // 手で いじったら「じぶん ごのみ」あつかい
+      [...elSegLevel.children].forEach(x=> x.classList.remove('on'));
+    }
+    saveSet(); paint(); paintLevels();
+  }));
+  segPaint.push(paint); paint();
 }
-segInit('#segWait','waitBeats', v=>parseInt(v,10));
-segInit('#segTol','tol', v=>parseFloat(v));
+segInit('#segWait','waitBeats', v=>parseInt(v,10), true);
+segInit('#segTol','tol', v=>parseFloat(v), true);
+segInit('#segRounds','rounds', v=>parseInt(v,10), false);
 
-// ポーズ選択
-const segPoses=$('#segPoses');
-POSE_IDS.forEach(id=>{
+// せってい がめん の むずかしさ ボタン
+const elSegLevel=$('#segLevel');
+Object.keys(LEVELS).forEach(k=>{
   const b=document.createElement('button');
-  b.textContent = POSES[id].emoji+' '+POSES[id].name;
-  b.className='chipbtn';
-  const paint=()=>b.classList.toggle('on', SET.poses.includes(id));
-  b.addEventListener('click',()=>{
-    if(SET.poses.includes(id)){ if(SET.poses.length>1) SET.poses=SET.poses.filter(p=>p!==id); }
-    else SET.poses=SET.poses.concat([id]);
-    saveSet(); paint();
-  });
-  paint(); segPoses.appendChild(b);
+  b.textContent=LEVELS[k].label; b.dataset.k=k;
+  b.addEventListener('click',()=>{ applyLevel(k); syncSettingsUI(); paintLevels(); });
+  elSegLevel.appendChild(b);
 });
+// せってい の ひょうじ を いまの あたい に あわせる
+function syncSettingsUI(){
+  segPaint.forEach(f=>f());
+  [...elSegLevel.children].forEach(b=> b.classList.toggle('on', b.dataset.k===SET.level));
+  bpmEl.value=SET.bpm; $('#bpmVal').textContent=SET.bpm;
+  volEl.value=SET.vol; $('#volVal').textContent=SET.vol;
+}
+
+// ポーズ選択（うで／ぜんしん の 2グループ）
+const posePaint=[];
+function buildPoseChips(list, box){
+  list.forEach(id=>{
+    const b=document.createElement('button');
+    b.textContent = POSES[id].emoji+' '+POSES[id].name;
+    b.className='chipbtn';
+    const paint=()=>b.classList.toggle('on', activePoses().includes(id));
+    b.addEventListener('click',()=>{
+      let cur = activePoses().slice();
+      if(cur.includes(id)){ if(cur.length>1) cur = cur.filter(p=>p!==id); }
+      else cur = POSE_IDS.filter(p=> cur.includes(p) || p===id);   // ならびじゅん を たもつ
+      SET.poses = cur; saveSet(); repaintPoses();
+    });
+    posePaint.push(paint); paint(); box.appendChild(b);
+  });
+}
+function repaintPoses(){
+  posePaint.forEach(f=>f());
+  $('#poseCount').textContent = activePoses().length;
+}
+buildPoseChips(ARM_POSES, $('#segArm'));
+buildPoseChips(LEG_POSES, $('#segLeg'));
+$('#presetEasy').addEventListener('click',()=>{ SET.poses=EASY_POSES.slice(); saveSet(); repaintPoses(); });
+$('#presetArm').addEventListener('click', ()=>{ SET.poses=ARM_POSES.slice();  saveSet(); repaintPoses(); });
+$('#presetAll').addEventListener('click', ()=>{ SET.poses=POSE_IDS.slice();   saveSet(); repaintPoses(); });
 
 // スライダー
 const volEl=$('#vol'), bpmEl=$('#bpm');
 volEl.value=SET.vol; $('#volVal').textContent=SET.vol;
 bpmEl.value=SET.bpm; $('#bpmVal').textContent=SET.bpm;
 volEl.addEventListener('input',()=>{ SET.vol=+volEl.value; $('#volVal').textContent=SET.vol; setVol(); saveSet(); });
-bpmEl.addEventListener('change',()=>{ SET.bpm=+bpmEl.value; $('#bpmVal').textContent=SET.bpm; saveSet();
+bpmEl.addEventListener('change',()=>{ SET.bpm=+bpmEl.value; $('#bpmVal').textContent=SET.bpm;
+  SET.level='custom'; saveSet(); paintLevels();
+  [...elSegLevel.children].forEach(b=> b.classList.remove('on'));
   if(G.running&&ac){ G.t0=ac.currentTime+0.2; G.nextBeat=0; } });
 bpmEl.addEventListener('input',()=>{ $('#bpmVal').textContent=bpmEl.value; });
+repaintPoses();
 
 // トグル
 function tog(sel,key){

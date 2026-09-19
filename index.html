@@ -806,96 +806,151 @@ function drawSkeleton(lm, fit){
   ctx.restore();
 }
 
-/* ---- お手本キャラクター（すべてCanvasで描画） ---- */
-function armTargets(pose, s, t, bp){
+/* ---- お手本の人型シルエット（すべてCanvasで描画） ----------------------
+   局所座標：身長をおよそ 1.5s、腰のあたりを原点(0,0)としています。
+   x は画面（ミラー表示）と同じ向きなので、「見たまま同じ側の手」を
+   動かせば正解になります。関節の並びは骨格推定と同じ構成です。
+   ---------------------------------------------------------------------- */
+function poseFigure(pose, t, bp){
+  const F = {
+    head:[0,-0.60], neck:[0,-0.44],
+    sh:[[-0.18,-0.40],[0.18,-0.40]],
+    hip:[[-0.12,0.02],[0.12,0.02]],
+    knee:[[-0.13,0.30],[0.13,0.30]],
+    ankle:[[-0.14,0.58],[0.14,0.58]],
+    el:[[-0.23,-0.15],[0.23,-0.15]],
+    wr:[[-0.26,0.08],[0.26,0.08]],
+    hint:null
+  };
   switch(pose){
-    case 'usagi':   return [[-0.22*s,-0.80*s],[0.22*s,-0.80*s]];
-    case 'hikouki': return [[-0.82*s,-0.04*s],[0.82*s,-0.04*s]];
-    case 'taiko':{ const a=Math.sin(bp*Math.PI*2);
-                   return [[-0.22*s,(0.16+0.12*a)*s],[0.22*s,(0.16-0.12*a)*s]]; }
-    case 'freeze':  return [[-0.44*s,0.10*s],[0.44*s,0.10*s]];
-    default:{ const a=Math.sin(t*3)*0.05*s; return [[-0.42*s,0.26*s+a],[0.42*s,0.26*s-a]]; }
+    case 'usagi':                                   // 両手を頭の上へ
+      F.el=[[-0.31,-0.55],[0.31,-0.55]];
+      F.wr=[[-0.20,-0.88],[0.20,-0.88]];
+      F.hint='up'; break;
+    case 'hikouki':                                 // 両腕を真横へ
+      F.el=[[-0.40,-0.40],[0.40,-0.40]];
+      F.wr=[[-0.65,-0.40],[0.65,-0.40]];
+      F.hint='side'; break;
+    case 'taiko':{                                  // 胸の前でトントン
+      const a=Math.sin(bp*Math.PI*2)*0.08;
+      F.el=[[-0.28,-0.08],[0.28,-0.08]];
+      F.wr=[[-0.10,-0.20+a],[0.10,-0.20-a]];
+      F.hint='drum'; break; }
+    case 'freeze':                                  // ピタッと静止
+      F.el=[[-0.21,-0.14],[0.21,-0.14]];
+      F.wr=[[-0.23,0.07],[0.23,0.07]];
+      F.hint='stop'; break;
+    default:{                                       // 待機（ゆらゆら）
+      const a=Math.sin(t*3)*0.02;
+      F.el=[[-0.23,-0.15+a],[0.23,-0.15-a]];
+      F.wr=[[-0.26,0.08+a],[0.26,0.08-a]]; }
   }
+  return F;
 }
-function drawChar(x,y,s,pose,mood,pop,bp){
-  const t=now();
-  const c=ctx;
-  c.save(); c.translate(x,y);
-  // 影
-  c.fillStyle='rgba(0,0,0,.16)';
-  c.beginPath(); c.ellipse(0, 0.52*s, 0.34*s, 0.07*s, 0,0,Math.PI*2); c.fill();
-
-  const bob = (pose==='freeze') ? 0 : Math.sin(t*3.4)*0.022*s;
-  c.translate(0, bob - pop*0.07*s);
-  const sc = 1 + pop*0.09;
-  c.scale(sc, sc);
-
-  const body='#fff1f5', line='#5a4a44', accent='#ff7aa2';
-  // 耳
-  c.save();
-  for(const sgn of [-1,1]){
-    c.save(); c.translate(sgn*0.12*s, -0.42*s); c.rotate(sgn*0.18);
-    c.fillStyle=body; c.strokeStyle=line; c.lineWidth=0.028*s;
-    rrPath(c,-0.055*s,-0.34*s,0.11*s,0.40*s,0.055*s); c.fill(); c.stroke();
-    c.fillStyle=accent; rrPath(c,-0.028*s,-0.30*s,0.056*s,0.30*s,0.028*s); c.fill();
-    c.restore();
+function poly(c, pts, w, color, s){
+  c.strokeStyle=color; c.lineWidth=w*s; c.lineCap='round'; c.lineJoin='round';
+  c.beginPath(); c.moveTo(pts[0][0]*s, pts[0][1]*s);
+  for(let i=1;i<pts.length;i++) c.lineTo(pts[i][0]*s, pts[i][1]*s);
+  c.stroke();
+}
+function star(c,x,y,r){
+  c.beginPath();
+  for(let k=0;k<5;k++){
+    const o=k*Math.PI*2/5-Math.PI/2;
+    c.lineTo(x+Math.cos(o)*r, y+Math.sin(o)*r);
+    c.lineTo(x+Math.cos(o+Math.PI/5)*r*0.45, y+Math.sin(o+Math.PI/5)*r*0.45);
+  }
+  c.closePath(); c.fill();
+}
+function arrow(c,x1,y1,x2,y2,h){
+  c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+  const a=Math.atan2(y2-y1,x2-x1);
+  c.beginPath();
+  c.moveTo(x2,y2); c.lineTo(x2-Math.cos(a-0.5)*h*2, y2-Math.sin(a-0.5)*h*2);
+  c.moveTo(x2,y2); c.lineTo(x2-Math.cos(a+0.5)*h*2, y2-Math.sin(a+0.5)*h*2);
+  c.stroke();
+}
+// 「どっちに うごかす？」の補助（矢印・点線）
+function drawHint(c,F,s,accent,t){
+  if(!F.hint) return;
+  const pulse=0.5+0.5*Math.sin(t*4);
+  c.save(); c.globalAlpha=0.35+0.5*pulse;
+  c.strokeStyle=accent; c.lineWidth=0.04*s; c.lineCap='round';
+  if(F.hint==='up'){
+    for(let i=0;i<2;i++){
+      const x=F.wr[i][0]*s + (i===0?-1:1)*0.15*s, y=F.wr[i][1]*s;
+      arrow(c, x, y+0.22*s, x, y+0.02*s, 0.05*s);
+    }
+  }else if(F.hint==='side'){
+    for(let i=0;i<2;i++){
+      const sgn=(i===0?-1:1), x=F.wr[i][0]*s, y=F.wr[i][1]*s;
+      arrow(c, x+sgn*0.06*s, y, x+sgn*0.18*s, y, 0.05*s);
+    }
+  }else if(F.hint==='drum'){
+    for(let i=0;i<2;i++){
+      const x=F.wr[i][0]*s, y=F.wr[i][1]*s;
+      c.beginPath(); c.moveTo(x-0.09*s,y+0.12*s); c.lineTo(x+0.09*s,y+0.12*s); c.stroke();
+      c.beginPath(); c.moveTo(x-0.06*s,y+0.19*s); c.lineTo(x+0.06*s,y+0.19*s); c.stroke();
+    }
+  }else if(F.hint==='stop'){
+    c.setLineDash([0.09*s,0.07*s]); c.lineDashOffset=-t*20;
+    c.beginPath(); c.ellipse(0,-0.18*s,0.50*s,0.74*s,0,0,Math.PI*2); c.stroke();
+    c.setLineDash([]);
   }
   c.restore();
-  // 体
-  c.fillStyle=body; c.strokeStyle=line; c.lineWidth=0.03*s;
-  c.beginPath(); c.ellipse(0,0.16*s,0.29*s,0.31*s,0,0,Math.PI*2); c.fill(); c.stroke();
-  // 足
-  c.beginPath(); c.ellipse(-0.14*s,0.45*s,0.11*s,0.06*s,0,0,Math.PI*2); c.fill(); c.stroke();
-  c.beginPath(); c.ellipse( 0.14*s,0.45*s,0.11*s,0.06*s,0,0,Math.PI*2); c.fill(); c.stroke();
-  // 腕
-  const arms=armTargets(pose,s,t,bp);
-  c.lineCap='round';
-  arms.forEach((h,i)=>{
-    const sx=(i===0?-1:1)*0.24*s, sy=-0.02*s;
-    const cx2=(sx+h[0])/2 + (i===0?-0.10:0.10)*s, cy2=(sy+h[1])/2 + 0.10*s;
-    c.strokeStyle=line; c.lineWidth=0.075*s;
-    c.beginPath(); c.moveTo(sx,sy); c.quadraticCurveTo(cx2,cy2,h[0],h[1]); c.stroke();
-    c.strokeStyle=body; c.lineWidth=0.048*s;
-    c.beginPath(); c.moveTo(sx,sy); c.quadraticCurveTo(cx2,cy2,h[0],h[1]); c.stroke();
-    // 手
-    c.fillStyle=body; c.strokeStyle=line; c.lineWidth=0.026*s;
-    if(pose==='usagi'){
-      c.save(); c.translate(h[0],h[1]);
-      rrPath(c,-0.055*s,-0.16*s,0.11*s,0.26*s,0.055*s); c.fill(); c.stroke(); c.restore();
-    }else{
-      c.beginPath(); c.arc(h[0],h[1],0.075*s,0,Math.PI*2); c.fill(); c.stroke();
-    }
-  });
+}
+function drawChar(x,y,s,pose,mood,pop,bp){
+  const t=now(), c=ctx;
+  const accent=(POSES[pose] && POSES[pose].color) || '#ffa53c';
+  const DARK='#3d4a63', EDGE='#ffffff';
+  c.save(); c.translate(x,y);
+  // 影
+  c.fillStyle='rgba(0,0,0,.14)';
+  c.beginPath(); c.ellipse(0,0.66*s,0.28*s,0.05*s,0,0,Math.PI*2); c.fill();
+
+  const bob  = (pose==='freeze') ? 0 : Math.sin(t*3.4)*0.016*s;
+  const jump = (mood==='happy') ? Math.abs(Math.sin(t*6.5))*0.07*s : 0;
+  c.translate(0, bob - pop*0.05*s - jump);
+  c.scale(1+pop*0.05, 1+pop*0.05);
+  if(mood==='oops') c.rotate(Math.sin(t*9)*0.045);
+
+  const F = poseFigure(pose, t, bp);
+
+  // 脚（白いフチ → 本体）
+  for(let i=0;i<2;i++){
+    const leg=[F.hip[i],F.knee[i],F.ankle[i]];
+    poly(c,leg,0.130,EDGE,s); poly(c,leg,0.095,DARK,s);
+  }
+  // 胴
+  c.strokeStyle=EDGE; c.lineWidth=0.07*s; c.lineJoin='round'; c.fillStyle=DARK;
+  c.beginPath();
+  c.moveTo(F.sh[0][0]*s,F.sh[0][1]*s); c.lineTo(F.sh[1][0]*s,F.sh[1][1]*s);
+  c.lineTo(F.hip[1][0]*s,F.hip[1][1]*s); c.lineTo(F.hip[0][0]*s,F.hip[0][1]*s);
+  c.closePath(); c.stroke(); c.fill();
+  // 首
+  poly(c,[F.neck,[F.head[0],F.head[1]+0.09]],0.090,DARK,s);
   // 頭
-  c.fillStyle=body; c.strokeStyle=line; c.lineWidth=0.03*s;
-  c.beginPath(); c.arc(0,-0.24*s,0.27*s,0,Math.PI*2); c.fill(); c.stroke();
-  // ほっぺ
-  c.fillStyle='rgba(255,150,180,.55)';
-  c.beginPath(); c.arc(-0.16*s,-0.19*s,0.055*s,0,Math.PI*2); c.fill();
-  c.beginPath(); c.arc( 0.16*s,-0.19*s,0.055*s,0,Math.PI*2); c.fill();
-  // 目・口
-  c.strokeStyle=line; c.fillStyle=line; c.lineWidth=0.026*s;
-  const blink = (Math.sin(t*1.7)>0.985);
+  c.strokeStyle=EDGE; c.lineWidth=0.055*s; c.fillStyle=DARK;
+  c.beginPath(); c.arc(F.head[0]*s,F.head[1]*s,0.135*s,0,Math.PI*2); c.stroke(); c.fill();
+  // 腕（いちばん見てほしいので明るい色で）
+  for(let i=0;i<2;i++){
+    const arm=[F.sh[i],F.el[i],F.wr[i]];
+    poly(c,arm,0.140,EDGE,s); poly(c,arm,0.100,accent,s);
+  }
+  // 手
+  for(let i=0;i<2;i++){
+    c.fillStyle=accent; c.strokeStyle=EDGE; c.lineWidth=0.035*s;
+    c.beginPath(); c.arc(F.wr[i][0]*s,F.wr[i][1]*s,0.075*s,0,Math.PI*2); c.stroke(); c.fill();
+  }
+  // うごきの ヒント
+  drawHint(c,F,s,accent,t);
+  // できたときの キラキラ
   if(mood==='happy'){
-    for(const sgn of [-1,1]){
-      c.beginPath(); c.arc(sgn*0.09*s,-0.29*s,0.05*s, Math.PI*1.15, Math.PI*1.85); c.stroke();
+    c.fillStyle='#ffd93d';
+    for(let i=0;i<6;i++){
+      const a=t*2.2+i*1.047, r=(0.55+0.05*Math.sin(t*6+i))*s;
+      star(c, Math.cos(a)*r, -0.30*s+Math.sin(a)*r*0.7, 0.05*s);
     }
-    c.beginPath(); c.ellipse(0,-0.15*s,0.055*s,0.045*s,0,0,Math.PI*2); c.fill();
-  }else if(mood==='oops'){
-    for(const sgn of [-1,1]){
-      c.beginPath(); c.moveTo(sgn*0.09*s-0.035*s,-0.31*s); c.lineTo(sgn*0.09*s+0.035*s,-0.26*s);
-      c.moveTo(sgn*0.09*s+0.035*s,-0.31*s); c.lineTo(sgn*0.09*s-0.035*s,-0.26*s); c.stroke();
-    }
-    c.beginPath(); c.arc(0,-0.14*s,0.035*s,0,Math.PI*2); c.fill();
-    c.fillStyle='rgba(120,200,255,.9)';                 // あせ
-    c.beginPath(); c.ellipse(0.21*s,-0.32*s,0.03*s,0.045*s,0.4,0,Math.PI*2); c.fill();
-  }else{
-    for(const sgn of [-1,1]){
-      c.beginPath();
-      if(blink){ c.moveTo(sgn*0.09*s-0.04*s,-0.28*s); c.lineTo(sgn*0.09*s+0.04*s,-0.28*s); c.stroke(); }
-      else { c.arc(sgn*0.09*s,-0.28*s,0.038*s,0,Math.PI*2); c.fill(); }
-    }
-    c.beginPath(); c.arc(0,-0.16*s,0.05*s,0.15*Math.PI,0.85*Math.PI); c.stroke();
   }
   c.restore();
 }
@@ -994,20 +1049,20 @@ function frame(){
 
   // --- キャラクターの位置（コール中は大きく中央、レスポンス中は隅） ---
   const small = (G.phase==='resp' || G.phase==='result');
-  G.ts = Math.min(CW,CH) * (small ? 0.26 : 0.46);
-  G.tx = small ? CW*0.17 : CW*0.5;
-  G.ty = small ? CH*0.72 : CH*0.45;
+  G.ts = Math.min(CW,CH) * (small ? 0.22 : 0.40);
+  G.tx = small ? CW*0.27 : CW*0.5;
+  G.ty = small ? CH*0.70 : CH*0.45;
   if(G.cs===0){ G.cs=G.ts; G.cx=G.tx; G.cy=G.ty; }
   const k = 1-Math.pow(0.001, dt);
   G.cs=lerp(G.cs,G.ts,k); G.cx=lerp(G.cx,G.tx,k); G.cy=lerp(G.cy,G.ty,k);
   G.pop = Math.max(0, G.pop - dt*4);
 
   // 背景パネル
-  const bw=G.cs*1.35, bh=G.cs*1.55;
+  const bw=G.cs*1.90, bh=G.cs*1.90;
   ctx.save();
-  ctx.fillStyle='rgba(255,255,255,'+(small?0.55:0.78)+')';
+  ctx.fillStyle='rgba(255,255,255,'+(small?0.58:0.80)+')';
   ctx.shadowColor='rgba(0,0,0,.18)'; ctx.shadowBlur=24; ctx.shadowOffsetY=8;
-  rrPath(ctx, G.cx-bw/2, G.cy-bh*0.62, bw, bh, G.cs*0.22); ctx.fill();
+  rrPath(ctx, G.cx-bw/2, G.cy-bh*0.60, bw, bh, G.cs*0.20); ctx.fill();
   ctx.restore();
 
   const bp = (G.running && ac) ? (((ac.currentTime-G.t0)/beatDur())%1) : (t%1);

@@ -95,6 +95,23 @@
            background:rgba(255,255,255,.45); box-shadow:0 2px 0 rgba(0,0,0,.2); display:block; }
   #dots i.on{ background:var(--yellow); transform:scale(1.25); }
 
+  /* ===== キープ ゲージ（ポーズが あっている あいだ だけ のびる） ===== */
+  #keep{ display:none; flex-direction:column; align-items:center; gap:6px;
+         margin-top:min(1.2vh,10px); }
+  #keep.show{ display:flex; }
+  #keepLab{ font-weight:900; color:#fff; font-size:clamp(15px,2.7vw,24px);
+            text-shadow:0 3px 0 rgba(0,0,0,.3), 0 0 14px rgba(0,0,0,.5); }
+  #keepBar{ width:min(62vw,460px); height:clamp(20px,3.2vh,30px); border-radius:999px;
+            background:rgba(255,255,255,.42); box-shadow:inset 0 3px 7px rgba(0,0,0,.22),
+            0 3px 0 rgba(0,0,0,.14); overflow:hidden; border:3px solid rgba(255,255,255,.85); }
+  #keepBar i{ display:block; width:0%; height:100%; border-radius:999px;
+              background:linear-gradient(90deg,#ffd93d,#ffa53c);
+              transition:width .08s linear; }
+  #keep.near #keepBar i{ background:linear-gradient(90deg,#9ee6ab,#4ecb71); }
+  #keep.full #keepBar{ animation:keepPop .4s ease-out; }
+  #keep.full #keepBar i{ background:linear-gradient(90deg,#fff3a8,#4ecb71); }
+  @keyframes keepPop{ 0%{transform:scale(1);} 40%{transform:scale(1.08);} 100%{transform:scale(1);} }
+
   #bottom{ display:flex; align-items:flex-end; gap:12px; }
   #hint{
     background:var(--panel); border-radius:20px; padding:10px 18px; box-shadow:var(--shadow);
@@ -295,6 +312,7 @@
       <div id="bigText"></div>
       <div id="chant"></div>
       <div id="dots"></div>
+      <div id="keep"><span id="keepLab">キープ ちゅう…</span><div id="keepBar"><i></i></div></div>
     </div>
     <div id="bottom">
       <div id="hint">カメラの まえで、ぜんしんが うつるように たってね</div>
@@ -473,7 +491,7 @@ const CONFIG = {
 // むずかしさ 3だんかい（はんていの ゆるさ・まつ じかん・キープ時間 をまとめて かえる）
 const LEVELS = {
   easy  :{ label:'😊 やさしい',   note:'ざっくり はんてい ／ ゆっくり まつ',
-           tol:1.7, waitBeats:12, hold:2, bpm:88,
+           tol:1.7, waitBeats:12, holdSec:0.5, bpm:88,
            // タッチモード：まと の おおきさ(からだ比)・せいげん時間・どうじに でる数・
            //               とどく きょり(からだ比)・とまって いる フレーム数
            tR:0.55, tSec:8.0, tN:1, tReach:[0.80,1.15], tHold:2,
@@ -481,11 +499,11 @@ const LEVELS = {
            //                 つぎが でる かんかく(秒)・どうじに おちる 数
            cFall:5.0, cR:0.60, cGap:2.6, cMax:1 },
   normal:{ label:'🙂 ふつう',     note:'ちょうど いい バランス',
-           tol:1.3, waitBeats:8,  hold:3, bpm:100,
+           tol:1.3, waitBeats:8,  holdSec:0.8, bpm:100,
            tR:0.40, tSec:5.5, tN:1, tReach:[0.95,1.35], tHold:3,
            cFall:3.5, cR:0.44, cGap:1.9, cMax:2 },
   hard  :{ label:'💪 むずかしい', note:'きちんと ポーズ ／ テンポ はやめ',
-           tol:1.0, waitBeats:5,  hold:5, bpm:116,
+           tol:1.0, waitBeats:6,  holdSec:1.2, bpm:116,
            tR:0.30, tSec:3.8, tN:2, tReach:[1.05,1.45], tHold:4,
            cFall:2.6, cR:0.33, cGap:1.3, cMax:3 }
 };
@@ -1511,7 +1529,7 @@ const G = {
   running:false, judgeOn:false, ready:false,
   t0:0, nextBeat:0, beat:-1,
   phase:'ready', pose:null, poseId:null,
-  result:null, best:0, hold:0, shown:false,
+  result:null, best:0, holdT:0, holdStep:0, respAt:0, shown:false,
   stars:0, combo:0, plays:0,
   landmarks:null, lastLm:0, body:null,
   charPose:'idle', mood:'normal', pop:0,
@@ -1552,6 +1570,17 @@ function setDots(total, on){
   elDots.innerHTML='';
   for(let i=0;i<total;i++){ const d=document.createElement('i'); if(i<on) d.className='on'; elDots.appendChild(d); }
 }
+const elKeep=$('#keep'), elKeepBar=$('#keepBar').firstElementChild, elKeepLab=$('#keepLab');
+// v … 0〜1 の すすみぐあい。show=false で ひっこめる
+function setKeep(show, v, msg){
+  elKeep.classList.toggle('show', !!show);
+  if(!show) return;
+  const r = clamp(v,0,1);
+  elKeepBar.style.width = (r*100).toFixed(1)+'%';
+  elKeep.classList.toggle('near', r>=0.85 && r<1);
+  elKeep.classList.toggle('full', r>=1);
+  if(msg && elKeepLab.textContent!==msg) elKeepLab.textContent=msg;
+}
 function flash(color){
   elFlash.style.background = color;
   elFlash.classList.remove('go'); void elFlash.offsetWidth; elFlash.classList.add('go');
@@ -1568,7 +1597,8 @@ function startRound(){
   let id = pick(list);
   if(list.length>1 && id===G.lastPoseId) id = pick(list.filter(p=>p!==G.lastPoseId));
   G.lastPoseId=id; G.poseId=id; G.pose=POSES[id];
-  G.result=null; G.best=0; G.hold=0; G.shown=false; G.mood='normal'; G.hintAt=0;
+  G.result=null; G.best=0; G.holdT=0; G.holdStep=0; G.shown=false;
+  G.mood='normal'; G.hintAt=0; G.respAt=now()+999;   // レスポンス が はじまる まで はんてい しない
   elPoseName.textContent = G.pose.name;
   elPoseChip.querySelector('.em').textContent = G.pose.emoji;
   elHint.textContent = G.pose.hint;
@@ -1622,6 +1652,7 @@ function onBeat(gb, tAudio){
     const i = rb - READY_B - CALL_B;
     if(i===0){
       clearChant();
+      G.respAt = now(); G.holdT = 0; G.holdStep = 0;
       bigText('まねっこ！', '#fff');
       SFX.go(tAudio);
       speak('はい、どうぞ！', 1.05, 1.3);
@@ -1635,7 +1666,7 @@ function onBeat(gb, tAudio){
   if(ph==='result'){
     const i = rb - READY_B - CALL_B - SET.waitBeats;
     if(i===0){
-      setDots(0,0); clearChant();
+      setDots(0,0); clearChant(); setKeep(false);
       if(!G.result) finishRound(false, tAudio);
       else showResultText();
     }
@@ -2023,27 +2054,46 @@ function drawFruits(){
 /* =========================================================================
    10. 判定ループ
    ========================================================================= */
-function judgeTick(){
-  if(!G.judgeOn || G.phase!=='resp' || G.result || !G.pose) return;
-  if(!G.body){ return; }
+const KEEP_GRACE = 0.45;        // まねっこ が はじまって すぐは はんてい しない
+
+function judgeTick(dt){
+  if(!G.judgeOn || SET.mode!=='mimic') { setKeep(false); return; }
+  if(G.phase!=='resp' || !G.pose){ setKeep(false); return; }
+  // できた あとも、みちた ゲージ を のこして「できた！」を みせる
+  if(G.result){ setKeep(G.result==='ok', 1, 'できた！'); return; }
+  const t=now();
+  // キープ の ながさ は「秒」で きめる（はやい 端末 でも おそい 端末 でも おなじ）
+  const need = G.pose.instant ? 0
+             : (LEVELS[SET.level] ? LEVELS[SET.level].holdSec : 0.8);
+
+  // ① まだ「よーい」の あいだ：ゲージ は からっぽ の まま みせる
+  if(t - G.respAt < KEEP_GRACE){
+    setKeep(true, 0, 'ポーズ を とってね');
+    return;
+  }
+  // ② からだ が みえない
+  if(!G.body){ setKeep(true, 0, 'からだ を うつしてね'); return; }
+
   const r = G.pose.judge(G.body, SET.tol);
   G.best = Math.max(G.best, r.score||0);
-  // 「おしい ところ」を その場で ことば に して つたえる
-  const t=now();
-  if(r.miss && !r.ok && t-G.hintAt > 1.2){
-    G.hintAt = t;
-    if(elHint.textContent !== r.miss) elHint.textContent = r.miss;
-  }
-  // ジャンプ のような「いっしゅん の うごき」は 1フレーム で せいりつ させる。
-  // それ いがい は、むずかしさ（なければ やさしさの あたい）で キープ時間 を きめる。
-  const needHold = G.pose.instant ? 1
-    : (LEVELS[SET.level] ? LEVELS[SET.level].hold
-                         : (SET.tol>=1.5 ? 2 : SET.tol>=1.2 ? 3 : 5));
+
   if(r.ok){
-    G.hold++;
-    if(G.hold>=needHold) finishRound(true);
+    G.holdT += dt;
+    // とちゅうで「すすんで いる」ことが おと でも わかる ように
+    const step = need>0 ? Math.floor(G.holdT/need*3) : 3;
+    if(step>G.holdStep && step<3){ G.holdStep=step; if(ac) tone(660+step*160, ac.currentTime, 0.09,'triangle',0.13); }
+    setKeep(true, need>0 ? G.holdT/need : 1, 'キープ ちゅう…');
+    if(G.holdT >= need){ setKeep(true, 1, 'できた！'); finishRound(true); }
   }else{
-    G.hold = Math.max(0, G.hold-1);
+    // すこし ぐらついた だけでは ゼロ に もどさない（ゆっくり へる）
+    G.holdT = Math.max(0, G.holdT - dt*0.6);
+    G.holdStep = need>0 ? Math.floor(G.holdT/need*3) : 0;
+    setKeep(true, need>0 ? G.holdT/need : 0,
+            G.holdT>0 ? 'そのまま！' : (r.miss || 'ポーズ を とってね'));
+    if(r.miss && t-G.hintAt > 1.2){
+      G.hintAt = t;
+      if(elHint.textContent !== r.miss) elHint.textContent = r.miss;
+    }
   }
 }
 
@@ -2655,7 +2705,7 @@ function frame(){
   G.body = (lm && fit) ? buildBody(lm, fit) : null;
   if(SET.mode==='touch') touchTick();
   else if(SET.mode==='catch') catchTick(dt);
-  else judgeTick();
+  else judgeTick(dt);
 
   // --- 描画 ---
   ctx.clearRect(0,0,CW,CH);
@@ -2801,6 +2851,7 @@ async function beginGame(withCamera){
   G.judgeOn = lastWithCamera;
   G.running = true; G.stars=0; G.combo=0; G.plays=0; G.log=[];
   G.mood='normal'; G.result=null; G.phase='ready';
+  setKeep(false);
   T.targets=[]; T.nextAt = now() + 1.2;          // タッチモード の まと を リセット
   C.items=[]; C.spawned=0; C.done=0; C.nextAt = now() + 1.4;   // キャッチモード を リセット
   elStar.textContent='0';
@@ -2832,6 +2883,7 @@ async function beginGame(withCamera){
 /* ---- おしまい：なんかい できたか を みせる ---- */
 function showSummary(){
   G.running=false;
+  setKeep(false);
   $('#settings').classList.remove('open');
   clearChant(); setDots(0,0); elBig.classList.remove('show');
 

@@ -450,6 +450,7 @@
         <button class="chipbtn" id="tVoice">🔊 こえの あんない</button>
         <button class="chipbtn" id="tGuide">🎯 まとの ひょうじ</button>
         <button class="chipbtn" id="tSkel">🦴 ほねぐみの せん</button>
+        <button class="chipbtn" id="tLR">🔴🔵 みぎ・ひだり の いろ</button>
         <button class="chipbtn" id="tMirrorTxt">🪞 ミラーひょうじ（こてい）</button>
       </div>
     </div>
@@ -485,6 +486,7 @@ const CONFIG = {
     touchParts:'hand',     // 'hand'=てだけ / 'both'=てと あし
     catchRock:false,       // キャッチ：さわらない もの（いし）を まぜるか
     voice:true, guide:true, skeleton:true,
+    lr:true,               // みぎ＝あか／ひだり＝あお で いろわけ
     poses:null            // null のときは EASY_POSES を つかう
   }
 };
@@ -2024,7 +2026,7 @@ function drawFruits(){
       const h=G.body.P[i];
       ctx.save();
       ctx.globalAlpha=0.30+0.12*Math.sin(now()*5);
-      ctx.fillStyle='#ffd93d';
+      ctx.fillStyle = SET.lr ? (i===16 ? LRC.R : LRC.L) : '#ffd93d';
       ctx.beginPath(); ctx.arc(h.x,h.y,gr,0,Math.PI*2); ctx.fill();
       ctx.globalAlpha=0.95; ctx.strokeStyle='#fff'; ctx.lineWidth=Math.max(3,gr*0.10);
       ctx.beginPath(); ctx.arc(h.x,h.y,gr,0,Math.PI*2); ctx.stroke();
@@ -2124,6 +2126,17 @@ function ring(c, x, y, r, target, wide){
   }
   c.restore();
 }
+/* みぎ＝あか／ひだり＝あお
+   MediaPipe の ばんごう は「その子 じしん の みぎ・ひだり」。
+   ミラー表示 なので、みぎ（あか）は がめん の みぎがわ に うつります。 */
+const LRC = { R:'#ff4d5e', L:'#3b82f6' };
+const RIGHT_IDX = new Set([12,14,16,24,26,28,32]);
+const LEFT_IDX  = new Set([11,13,15,23,25,27,31]);
+function sideColor(a,b){
+  if(RIGHT_IDX.has(a) && RIGHT_IDX.has(b)) return LRC.R;
+  if(LEFT_IDX.has(a)  && LEFT_IDX.has(b))  return LRC.L;
+  return null;                                   // かた・こし の よこせん
+}
 const CONN=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
 function drawSkeleton(lm, fit){
   ctx.save();
@@ -2136,14 +2149,22 @@ function drawSkeleton(lm, fit){
     if(!la||!lb) continue;
     if((la.visibility!==undefined&&la.visibility<0.3)||(lb.visibility!==undefined&&lb.visibility<0.3)) continue;
     const pa=toCanvas(la,fit), pb=toCanvas(lb,fit);
+    const sc = SET.lr ? sideColor(a,b) : null;
+    ctx.strokeStyle = sc || 'rgba(255,255,255,.75)';
+    ctx.lineWidth = Math.max(4, Math.min(CW,CH)*(sc?0.016:0.012));
     ctx.beginPath(); ctx.moveTo(pa.x,pa.y); ctx.lineTo(pb.x,pb.y); ctx.stroke();
   }
-  // 手首を目立たせる
-  for(const i of [15,16]){
+  // 手首（と あしくび）を目立たせる
+  const dots = SET.lr ? [[15,LRC.L],[16,LRC.R],[27,LRC.L],[28,LRC.R]]
+                      : [[15,'rgba(255,217,61,.95)'],[16,'rgba(255,217,61,.95)']];
+  for(const [i,col] of dots){
     const l=lm[i]; if(!l) continue;
+    if(l.visibility!==undefined && l.visibility<0.3) continue;
     const p=toCanvas(l,fit);
-    ctx.fillStyle = 'rgba(255,217,61,.95)';
-    ctx.beginPath(); ctx.arc(p.x,p.y, Math.max(8,Math.min(CW,CH)*0.018), 0, Math.PI*2); ctx.fill();
+    const rr = Math.max(8,Math.min(CW,CH)*(SET.lr?0.024:0.018));
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(p.x,p.y, rr, 0, Math.PI*2); ctx.fill();
+    if(SET.lr){ ctx.shadowBlur=0; ctx.lineWidth=Math.max(2,rr*0.22); ctx.strokeStyle='#fff'; ctx.stroke(); }
   }
   ctx.restore();
 }
@@ -2592,10 +2613,12 @@ function drawChar(x,y,s,pose,mood,pop,bp){
 
   const F = poseFigure(pose, t, bp);
 
+  // みぎ・ひだり の いろ（ミラー なので がめん の みぎ＝その子 の みぎ）
+  const limbCol = i => SET.lr ? (i===1 ? LRC.R : LRC.L) : null;
   // 脚（白いフチ → 本体）
   for(let i=0;i<2;i++){
     const leg=[F.hip[i],F.knee[i],F.ankle[i]];
-    poly(c,leg,0.130,EDGE,s); poly(c,leg,0.095,DARK,s);
+    poly(c,leg,0.130,EDGE,s); poly(c,leg,0.095,limbCol(i)||DARK,s);
   }
   // 胴
   c.strokeStyle=EDGE; c.lineWidth=0.07*s; c.lineJoin='round'; c.fillStyle=DARK;
@@ -2611,11 +2634,11 @@ function drawChar(x,y,s,pose,mood,pop,bp){
   // 腕（いちばん見てほしいので明るい色で）
   for(let i=0;i<2;i++){
     const arm=[F.sh[i],F.el[i],F.wr[i]];
-    poly(c,arm,0.140,EDGE,s); poly(c,arm,0.100,accent,s);
+    poly(c,arm,0.140,EDGE,s); poly(c,arm,0.100,limbCol(i)||accent,s);
   }
   // 手
   for(let i=0;i<2;i++){
-    c.fillStyle=accent; c.strokeStyle=EDGE; c.lineWidth=0.035*s;
+    c.fillStyle=limbCol(i)||accent; c.strokeStyle=EDGE; c.lineWidth=0.035*s;
     c.beginPath(); c.arc(F.wr[i][0]*s,F.wr[i][1]*s,0.075*s,0,Math.PI*2); c.stroke(); c.fill();
   }
   // うごきの ヒント
@@ -2762,6 +2785,21 @@ function frame(){
 
   const bp = (G.running && ac) ? (((ac.currentTime-G.t0)/beatDur())%1) : (t%1);
   drawChar(G.cx, G.cy, G.cs, G.charPose, G.mood, G.pop, bp);
+
+  // お手本 の したに「ひだり（あお）／みぎ（あか）」の ふだ
+  if(SET.lr){
+    const fs = Math.max(13, G.cs*0.14);
+    ctx.save();
+    ctx.font = `900 ${fs}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.lineJoin='round'; ctx.lineWidth=Math.max(3, fs*0.28); ctx.strokeStyle='#fff';
+    const ly = G.cy + G.cs*0.66;
+    for(const [dx,txt,col] of [[-0.78,'ひだり',LRC.L],[0.78,'みぎ',LRC.R]]){
+      ctx.strokeText(txt, G.cx+dx*G.cs, ly);
+      ctx.fillStyle=col; ctx.fillText(txt, G.cx+dx*G.cs, ly);
+    }
+    ctx.restore();
+  }
 
   // 体が見えないときのお知らせ
   if(G.judgeOn && G.running && !G.body && G.phase==='resp'){
@@ -3133,7 +3171,7 @@ function tog(sel,key){
   b.addEventListener('click',()=>{ SET[key]=!SET[key]; saveSet(); paint(); });
   paint();
 }
-tog('#tVoice','voice'); tog('#tGuide','guide'); tog('#tSkel','skeleton');
+tog('#tVoice','voice'); tog('#tGuide','guide'); tog('#tSkel','skeleton'); tog('#tLR','lr');
 const mt=$('#tMirrorTxt'); mt.classList.add('on');
 mt.addEventListener('click',()=>{
   alert('この アプリは いつも「かがみ（ミラー）」で うつります。\n\nおてほんと おなじ がわの てを うごかせば OK です。\n（さゆうを あたまの なかで いれかえる ひつようは ありません）');

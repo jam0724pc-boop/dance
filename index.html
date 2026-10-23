@@ -517,7 +517,7 @@
     <div class="item">
       <label>はんていの やさしさ <small class="only">まねっこ</small></label>
       <div class="seg" id="segTol">
-        <button data-v="1.7">とても やさしい</button><button data-v="1.3">ふつう</button><button data-v="1.0">きびしい</button>
+        <button data-v="1.7">とても やさしい</button><button data-v="1.5">ふつう</button><button data-v="1.0">きびしい</button>
       </div>
     </div>
 
@@ -575,7 +575,7 @@ const CONFIG = {
   poseCDN : 'https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/',
   camCDN  : 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js',
   defaults: {
-    vol:80, bpm:100, waitBeats:8, tol:1.3, level:'normal', rounds:10,
+    vol:80, bpm:100, waitBeats:8, tol:1.5, level:'normal', rounds:10,
     mode:'mimic',          // 'mimic'=まねっこ / 'touch'=タッチ / 'catch'=キャッチ
     touchParts:'hand',     // 'hand'=てだけ / 'both'=てと あし
     catchRock:false,       // キャッチ：さわらない もの（いし）を まぜるか
@@ -595,7 +595,7 @@ const LEVELS = {
            //                 つぎが でる かんかく(秒)・どうじに おちる 数
            cFall:5.0, cR:0.60, cGap:2.6, cMax:1 },
   normal:{ label:'🙂 ふつう',     note:'ちょうど いい バランス',
-           tol:1.3, waitBeats:8,  holdSec:0.8, bpm:100,
+           tol:1.5, waitBeats:8,  holdSec:0.8, bpm:100,
            tR:0.40, tSec:5.5, tN:1, tReach:[0.95,1.35], tHold:0.25,
            cFall:3.5, cR:0.44, cGap:1.9, cMax:2 },
   hard  :{ label:'💪 むずかしい', note:'きちんと ポーズ ／ テンポ はやめ',
@@ -613,6 +613,7 @@ let SET = Object.assign({}, CONFIG.defaults);
 try{
   const raw = localStorage.getItem(SAVE_KEY);
   if(raw) SET = Object.assign(SET, JSON.parse(raw));
+  if(SET.tol===1.3) SET.tol=1.5;      // まえ の「ふつう」（1.3）を あたらしい「ふつう」へ
 }catch(e){}
 function saveSet(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(SET)); }catch(e){} }
 // むずかしさ を えらぶと、かんれんする せってい が まとめて かわる
@@ -1131,7 +1132,7 @@ const POSES = {
       const r=tplJudge(b,tol,'kiotsuke',{ext:true});
       const calm = (b.motion===null) || b.motion < 0.10*tol;     // じっと して いる
       // あし が うつって いる ときは「かかと を そろえる」も みる（ふつう に たって いる だけ と わける）
-      const feet = !(b.vis(27)&&b.vis(28)) || Math.abs(b.P[27].x-b.P[28].x) < b.shW*(0.65+0.15*(tol-1));
+      const feet = !(b.vis(27)&&b.vis(28)) || Math.abs(b.P[27].x-b.P[28].x) < b.shW*(0.70+0.20*(tol-1));
       const ok = r.ok && calm && feet;
       return {ok, score:r.score*(calm?1:0.7)*(feet?1:0.7), hands:r.hands,
               miss: !r.ok ? 'おててを からだの よこに おろそう！'

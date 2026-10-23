@@ -330,6 +330,87 @@
 
   .startbtns{ display:flex; flex-direction:column; align-items:center; gap:min(1.6vh,14px); }
 
+  .judgerow{ display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px; }
+  .judgerow > span{ font-weight:900; font-size:13px; color:var(--ink2); background:#f3ead8; border-radius:999px; padding:4px 10px; }
+  .levels.mini button{ font-size:clamp(12px,1.8vw,15px); padding:5px 12px; border-width:2px; box-shadow:0 2px 0 var(--line); }
+  .levels.mini button.on{ box-shadow:0 2px 0 var(--ink); }
+  /* ===== ずかん・じゅんばんづくり ===== */
+  .tools{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:8px; }
+  .toolbtn{ border:2px solid var(--ink); background:#fff; color:var(--ink); border-radius:999px;
+            font-weight:900; font-size:clamp(13px,1.9vw,15px); padding:6px 13px; cursor:pointer;
+            box-shadow:0 3px 0 var(--ink); }
+  .toolbtn:active{ transform:translateY(3px); box-shadow:0 1px 0 var(--ink); }
+  .screen.tool{ z-index:35; justify-content:flex-start; gap:12px; padding:max(14px,env(safe-area-inset-top)) 18px 24px; }
+  .screen.tool::before, .screen.tool::after{ display:none; }
+  .tbar{ width:min(1120px,100%); display:flex; align-items:center; gap:12px; }
+  .tbar h2{ margin:0; font-size:clamp(22px,3.4vw,32px); color:var(--ink); }
+  .tclose{ margin-left:auto; border:none; background:var(--ink); color:#fff; font-weight:900;
+           font-size:18px; padding:11px 20px; border-radius:999px; cursor:pointer; }
+  .ttabs{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .ttabs button{ border:3px solid var(--line); background:#fff; color:var(--ink); font-weight:900;
+                 font-size:clamp(14px,2vw,18px); padding:8px 16px; border-radius:999px; cursor:pointer;
+                 box-shadow:0 3px 0 var(--line); }
+  .ttabs button.on{ background:var(--yellow); border-color:var(--ink); box-shadow:0 3px 0 var(--ink); }
+  .tnote{ margin:0; font-weight:800; color:var(--ink2); font-size:14px; }
+  .zgrid{ width:min(1120px,100%); display:grid; gap:12px;
+          grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); }
+  .zcard{ border:none; border-radius:18px; background:#fff; box-shadow:var(--lift); cursor:pointer;
+          display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 6px 10px;
+          border-top:8px solid var(--c,#ccc); color:var(--ink); }
+  .lv1{ --c:var(--green); } .lv2{ --c:var(--yellow); } .lv3{ --c:var(--red); }
+  .zcard b{ font-size:18px; }
+  .zstar{ color:var(--c); font-size:17px; letter-spacing:2px; font-weight:900; -webkit-text-stroke:.5px rgba(43,35,64,.35); }
+  .ztag{ font-size:12px; font-weight:800; color:var(--ink2); }
+  .ttabs button.lv1{ border-color:var(--green); } .ttabs button.lv2{ border-color:#d9a215; } .ttabs button.lv3{ border-color:var(--red); }
+  .ttabs button.on.lv1, .ttabs button.on.lv2, .ttabs button.on.lv3{ border-color:var(--ink); }
+  /* じゅんばん */
+  .bbox{ width:min(1120px,100%); background:var(--panel); border-radius:20px; box-shadow:var(--lift); padding:12px 14px; }
+  .bhead{ display:flex; gap:14px; align-items:baseline; flex-wrap:wrap; text-align:left; }
+  .bhead b{ font-size:18px; color:var(--ink); } .bhead span{ font-size:13px; font-weight:800; color:var(--ink2); }
+  .bseq{ display:flex; gap:10px; overflow-x:auto; padding:10px 2px 12px; min-height:122px; align-items:stretch;
+         -webkit-overflow-scrolling:touch; }
+  .bempty{ margin:auto; font-weight:800; color:var(--ink2); }
+  .btile{ flex:0 0 auto; width:104px; border-radius:16px; background:#fff; border:3px solid var(--line);
+          border-top:8px solid var(--c); display:flex; flex-direction:column; align-items:center;
+          padding:4px 4px 6px; cursor:pointer; position:relative; }
+  .btile.sel{ border-color:var(--ink); box-shadow:0 0 0 4px rgba(245,184,32,.8); }
+  .bno{ position:absolute; top:-6px; left:-6px; width:28px; height:28px; border-radius:50%; background:var(--ink);
+        color:#fff; font-weight:900; font-size:15px; display:grid; place-items:center; }
+  .bem{ font-size:32px; line-height:1.2; } .bnm{ font-weight:900; font-size:14px; color:var(--ink); white-space:nowrap; }
+  .bctl{ display:flex; gap:4px; margin-top:4px; }
+  .bctl button{ width:30px; height:34px; border-radius:10px; border:2px solid var(--line); background:#fffaf2;
+                font-weight:900; font-size:14px; cursor:pointer; color:var(--ink); padding:0; }
+  .bctl button:disabled{ opacity:.3; }
+  .bwarn{ margin:0 0 6px; font-size:13px; font-weight:800; color:#b4570f; min-height:1px; text-align:left; }
+  .bbtns{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .bbtns .bigbtn{ margin-left:auto; font-size:clamp(17px,2.6vw,22px); padding:11px 26px; }
+  .bbtns .bigbtn.on{ background:var(--green); color:#fff; box-shadow:0 7px 0 #1f7a41; }
+  .bpal{ width:min(1120px,100%); display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(205px,1fr)); }
+  .bpose{ position:relative; }
+  .badd{ width:100%; border:none; border-radius:16px; background:#fff; box-shadow:var(--lift-sm); cursor:pointer;
+         display:flex; align-items:center; gap:4px; padding:4px 40px 4px 2px; border-left:8px solid var(--c); text-align:left; color:var(--ink); }
+  .badd span{ display:flex; flex-direction:column; } .badd b{ font-size:16px; word-break:keep-all; line-height:1.25; } .badd i{ font-style:normal; color:var(--c); font-weight:900; -webkit-text-stroke:.5px rgba(43,35,64,.35); }
+  .badd:active{ transform:scale(.97); }
+  .blook{ position:absolute; top:50%; margin-top:-18px; right:6px; width:36px; height:36px; border-radius:50%; border:2px solid var(--line);
+          background:#fffaf2; font-size:17px; cursor:pointer; padding:0; }
+  .btoast{ position:fixed; left:50%; bottom:30px; transform:translateX(-50%) translateY(20px); opacity:0;
+           background:var(--ink); color:#fff; font-weight:900; padding:12px 22px; border-radius:999px;
+           transition:all .25s; pointer-events:none; }
+  .btoast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  /* 1つ を おおきく */
+  #poseView{ position:fixed; inset:0; z-index:40; background:rgba(29,26,38,.58); display:none;
+             align-items:center; justify-content:center; padding:16px; }
+  #poseView.open{ display:flex; }
+  .pvsheet{ background:#fffaf2; border-radius:24px; box-shadow:0 8px 0 rgba(43,35,64,.35);
+            display:flex; gap:18px; align-items:center; padding:18px 24px; max-width:min(860px,100%); flex-wrap:wrap; justify-content:center; }
+  #pvFig{ background:#fff; border-radius:20px; }
+  .pvtext{ flex:1 1 300px; text-align:left; }
+  .pvtext h3{ margin:0 0 4px; font-size:32px; color:var(--ink); }
+  .pvstar{ margin:0 0 10px; font-weight:900; font-size:20px; color:var(--c); -webkit-text-stroke:.5px rgba(43,35,64,.35); }
+  .pvhint{ margin:0 0 8px; font-weight:900; font-size:20px; color:var(--ink); }
+  .pvsub{ margin:0 0 6px; font-weight:800; font-size:15px; color:var(--ink2); }
+  .pvbtns{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+
   /* ===== iPad（よこむき）：iPad Air 第5世代 1180×820（Safari では 1180×740 ほど） =====
      たて に ならべると はみだす ので、よこ に ならべて 1まい に おさめる */
   @media (orientation:landscape) and (min-width:960px) and (max-height:900px){
@@ -348,7 +429,13 @@
     /* むずかしさ・かいすう を よこ に */
     .levelbox{ display:flex; align-items:flex-start; justify-content:center; gap:0;
                max-width:min(980px,94vw); padding:12px 8px; }
-    .levelbox .lvcol{ padding:0 22px; }
+    .levelbox .lvcol{ padding:0 20px; }
+    .levelbox .levels{ flex-wrap:nowrap; }
+    .levelbox .tools{ flex-wrap:nowrap; }
+    .levelbox .levels button{ white-space:nowrap; }
+    #levels button{ font-size:18px; padding:8px 14px; }
+    #orderSel button{ font-size:15px; padding:7px 13px; }
+    .levelbox{ max-width:min(1120px,96vw); }
     .levelbox .lvcol + .lvcol{ border-left:3px dashed var(--line); margin-top:0; }
     #touchOpt, #catchOpt{ margin-bottom:0; }
     .levelnote + .levellabel{ margin-top:0; }
@@ -436,11 +523,23 @@
     <div class="lvcol">
       <p class="levellabel">むずかしさ を えらんでね</p>
       <div class="levels" id="levels"></div>
+      <div class="judgerow"><span>はんてい</span><div class="levels mini judgesel" id="judgeSel"></div></div>
       <p class="levelnote" id="levelNote"></p>
     </div>
-    <div class="lvcol">
+    <div class="lvcol" id="orderCol">
+      <p class="levellabel">でる じゅんばん</p>
+      <div class="levels small" id="orderSel">
+        <button data-o="random">🎲 おまかせ</button><button data-o="program">🧩 じぶんで きめる</button>
+      </div>
+      <p class="levelnote" id="orderNote"></p>
+      <div class="tools" id="mimicTools">
+        <button class="toolbtn" id="openZukan">📖 ポーズずかん</button>
+        <button class="toolbtn" id="openBuilder">✏️ じゅんばんを つくる</button>
+      </div>
+    </div>
+    <div class="lvcol" id="roundsCol">
       <p class="levellabel">なんかい やる？</p>
-      <div class="levels small" id="roundsSel"></div>
+      <div class="levels mini" id="roundsSel"></div>
     </div>
   </div>
 
@@ -476,6 +575,58 @@
   <div class="rbtns" id="loadBtns">
     <button class="bigbtn" id="loadRetry" style="display:none">🔄 もういちど ためす</button>
     <button class="bigbtn alt" id="loadNoCam">カメラなしで あそぶ</button>
+  </div>
+</div>
+
+<!-- ポーズずかん -->
+<div class="screen floor tool hidden" id="zukan">
+  <div class="tbar">
+    <h2>📖 ポーズずかん</h2>
+    <button class="tclose" id="zkClose">✕ とじる</button>
+  </div>
+  <div class="ttabs" id="zkTabs"></div>
+  <p class="tnote" id="zkNow"></p>
+  <div class="zgrid" id="zkGrid"></div>
+</div>
+
+<!-- じゅんばん を つくる -->
+<div class="screen floor tool hidden" id="builder">
+  <div class="tbar">
+    <h2>🧩 じゅんばんを つくる</h2>
+    <button class="tclose" id="bClose">✕ とじる</button>
+  </div>
+  <div class="ttabs slots" id="bSlots"></div>
+  <div class="bbox">
+    <div class="bhead"><b id="bCount"></b><span id="bSelNote"></span></div>
+    <div class="bseq" id="bSeq"></div>
+    <p class="bwarn" id="bWarn"></p>
+    <div class="bbtns">
+      <button class="chipbtn" id="bFill">🎲 おまかせで 10こ つくる</button>
+      <button class="chipbtn" id="bClear">🗑 ぜんぶ けす</button>
+      <button class="bigbtn" id="bUse">▶ この じゅんばんで あそぶ</button>
+    </div>
+  </div>
+  <div class="ttabs" id="bTabs"></div>
+  <div class="bpal" id="bPal"></div>
+  <div class="btoast" id="bToast"></div>
+</div>
+
+<!-- ポーズ を おおきく みる -->
+<div id="poseView">
+  <div class="pvsheet">
+    <div id="pvFig"></div>
+    <div class="pvtext">
+      <h3 id="pvName"></h3>
+      <p class="pvstar" id="pvStar"></p>
+      <p class="pvhint" id="pvHint"></p>
+      <p class="pvsub" id="pvChant"></p>
+      <p class="pvsub" id="pvTag"></p>
+      <div class="pvbtns">
+        <button class="chipbtn" id="pvSay">🔊 こえで きく</button>
+        <button class="chipbtn" id="pvAdd">➕ じゅんばんに いれる</button>
+        <button class="chipbtn" id="pvClose">とじる</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -515,10 +666,8 @@
     </div>
 
     <div class="item">
-      <label>はんていの やさしさ <small class="only">まねっこ</small></label>
-      <div class="seg" id="segTol">
-        <button data-v="1.7">とても やさしい</button><button data-v="1.5">ふつう</button><button data-v="1.0">きびしい</button>
-      </div>
+      <label>はんてい（<span id="judgeMode">まねっこ</span> の とき）</label>
+      <div class="seg judgesel" id="segJudge"></div>
     </div>
 
     <div class="item wide">
@@ -527,7 +676,10 @@
         <button class="chipbtn" id="presetEasy">⭐ おすすめ 10しゅるい</button>
         <button class="chipbtn" id="presetArm">🪑 すわったままでも OK</button>
         <button class="chipbtn" id="presetAll">🙆 ぜんぶ つかう</button>
+        <button class="chipbtn" id="setZukan">📖 ずかんで みる</button>
+        <button class="chipbtn" id="setBuilder">🧩 じゅんばんを つくる</button>
       </div>
+      <p class="grp">※ ここで えらぶ ポーズは「🎲 おまかせ」の ときに つかいます</p>
       <p class="grp">うで・じょうはんしん（いす や 車いす でも できます）</p>
       <div class="seg" id="segArm"></div>
       <p class="grp">ぜんしん（たって、ひざ や あし が うつる ばしょ で）</p>
@@ -581,7 +733,9 @@ const CONFIG = {
     catchRock:false,       // キャッチ：さわらない もの（いし）を まぜるか
     voice:true, guide:true, skeleton:true,
     lr:true,               // みぎ＝あか／ひだり＝あお で いろわけ
-    poses:null            // null のときは EASY_POSES を つかう
+    poses:null,           // null のときは EASY_POSES を つかう
+    order:'random',       // まねっこ の でかた：'random'（おまかせ）／'program'（じぶんで きめた じゅんばん）
+    progSlot:'A', programs:{A:[],B:[],C:[]}
   }
 };
 // むずかしさ 3だんかい（はんていの ゆるさ・まつ じかん・キープ時間 をまとめて かえる）
@@ -613,14 +767,31 @@ let SET = Object.assign({}, CONFIG.defaults);
 try{
   const raw = localStorage.getItem(SAVE_KEY);
   if(raw) SET = Object.assign(SET, JSON.parse(raw));
-  if(SET.tol===1.3) SET.tol=1.5;      // まえ の「ふつう」（1.3）を あたらしい「ふつう」へ
 }catch(e){}
+/* はんてい の 3だんかい：むずかしさ（やさしい・ふつう・むずかしい）の なか で、さらに
+   「ゆるめ・ふつう・きびしめ」を えらべる。あそび（まねっこ・タッチ・キャッチ）ごと に おぼえる。 */
+const JUDGE = {
+  loose :{ label:'🍀 ゆるめ',   tol:1.15, hit:1.25, note:'すこし ずれても OK' },
+  std   :{ label:'🙂 ふつう',   tol:1.00, hit:1.00, note:'' },
+  strict:{ label:'🔥 きびしめ', tol:0.87, hit:0.82, note:'きちんと できたら OK' }
+};
+if(!SET.judgeBy || typeof SET.judgeBy!=='object') SET.judgeBy={mimic:'std',touch:'std',catch:'std'};
+const judgeKey = (m)=> JUDGE[SET.judgeBy[m||SET.mode]] ? SET.judgeBy[m||SET.mode] : 'std';
+const judgeHit = ()=> JUDGE[judgeKey()].hit;          // タッチ・キャッチ の とどく はんい の ばいりつ
+// まねっこ の はんてい の ゆるさ ＝ むずかしさ の きほん × はんてい の だんかい
+function refreshTol(){
+  const L = LEVELS[SET.level];
+  if(L) SET.tolBase = L.tol;
+  const base = SET.tolBase || 1.5;
+  SET.tol = Math.round(base*JUDGE[judgeKey('mimic')].tol*100)/100;
+}
+refreshTol();
 function saveSet(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(SET)); }catch(e){} }
 // むずかしさ を えらぶと、かんれんする せってい が まとめて かわる
 function applyLevel(k){
   const L = LEVELS[k]; if(!L) return;
-  SET.level=k; SET.tol=L.tol; SET.waitBeats=L.waitBeats; SET.bpm=L.bpm;
-  saveSet();
+  SET.level=k; SET.tolBase=L.tol; SET.waitBeats=L.waitBeats; SET.bpm=L.bpm;
+  refreshTol(); saveSet();
 }
 
 /* =========================================================================
@@ -831,7 +1002,7 @@ const POSES = {
   usagi:{
     name:'うさぎ', emoji:'🐰', color:'#e8487a',
     call:'つぎは、うさぎさん！',
-    chant:['うさ','ぎさん','ピョン','ピョン'],
+    chant:['うさぎ','さん','ピョン','ピョン'],
     notes:[523.25,587.33,659.25,880],
     hint:'あたまの うえで おみみを ピン！',
     judge(b,tol){
@@ -1320,7 +1491,7 @@ const POSES = {
       const pair = (b.vis(27)&&b.vis(28)) ? A : ((b.vis(25)&&b.vis(26)) ? K : null);
       if(!pair) return {ok:false,score:0,hands:[false,false],miss:'あしが うつるように さがってね'};
       const d = Math.abs(pair[0].y-pair[1].y)/b.unit;
-      const th = 0.42/tol;
+      const th = 0.42/Math.max(1,tol);   // きびしめ でも お手本 どおり なら できる たかさ
       return {ok:d>th, score:clamp(d/th,0,1), hands:[false,false], miss:'もうすこし たかく あしを あげて！'};
     },
     guide(ctx,b,r){
@@ -1420,6 +1591,13 @@ const ARM_POSES = ['usagi','banzai','maru','batsu','hikouki','maenarae',
 /* ぜんしんが うつる ばしょ で あそぶ ポーズ */
 const LEG_POSES = ['kataashi','ashi','kaeru','daiji','jump'];
 const POSE_IDS  = ARM_POSES.concat(LEG_POSES);
+// ポーズ その もの の むずかしさ（★1 かんたん／★2 ふつう／★3 むずかしい）：ずかん と じゅんばんづくり で つかう
+const POSE_LV = {
+  usagi:1, banzai:1, hikouki:1, pachi:1, baibai:1, hai:1, atama:1, heso:1, kiotsuke:1, freeze:1, bunbun:1, taiko:1,
+  maru:2, kata:2, kirakira:2, hoppe:2, penguin:2, guts:2, maenarae:2, ojigi:2, hiza:2, fune:2, ashi:2, jump:2,
+  batsu:3, kubi:3, kataashi:3, kaeru:3, daiji:3
+};
+for(const id of POSE_IDS) POSES[id].lv = POSE_LV[id] || 2;
 // はじめから えらばれている、わかりやすい ポーズ
 const EASY_POSES = ['usagi','banzai','hikouki','kirakira','kata','pachi',
                     'taiko','hai','baibai','freeze'];
@@ -1660,6 +1838,10 @@ function startRound(){
   // 「ふくろ」から じゅんばん に とりだす：えらんだ ポーズ を ぜんぶ 1かい ずつ だす まで
   // おなじ ポーズ は でない（10かい の なかで なるべく かぶらない）。
   // ふくろ が からに なったら まぜなおす（つづけて おなじ ポーズ には しない）。
+  if(G.prog){                                   // じぶんで きめた じゅんばん
+    const id=G.prog[G.plays % G.prog.length];
+    G.lastPoseId=id; G.poseId=id; G.pose=POSES[id];
+  }else{
   const list = activePoses();
   if(!G.bag || !G.bag.length || G.bag.some(p=>!list.includes(p))){
     G.bag = list.slice();
@@ -1668,12 +1850,13 @@ function startRound(){
   }
   const id = G.bag.pop();
   G.lastPoseId=id; G.poseId=id; G.pose=POSES[id];
+  }
   G.result=null; G.best=0; G.holdT=0; G.holdStep=0; G.shown=false;
   G.mood='normal'; G.hintAt=0; G.jr=null; G.respAt=now()+999;   // レスポンス が はじまる まで はんてい しない
   elPoseName.textContent = G.pose.name;
   elPoseChip.querySelector('.em').textContent = G.pose.emoji;
   elHint.textContent = G.pose.hint;
-  elRound.textContent = (G.plays+1)+' / '+SET.rounds;
+  elRound.textContent = (G.plays+1)+' / '+G.total;
 }
 
 function onBeat(gb, tAudio){
@@ -1748,7 +1931,7 @@ function onBeat(gb, tAudio){
     if(i===RESULT_B-1){
       G.log.push({id:G.poseId, ok:G.result==='ok'});
       G.plays++;
-      if(G.plays >= SET.rounds){ G.running=false; setTimeout(showSummary, 700); }
+      if(G.plays >= G.total){ G.running=false; setTimeout(showSummary, 700); }
     }
   }
 }
@@ -1931,7 +2114,7 @@ function touchTick(dt){
   for(const tg of T.targets){
     if(tg.done) continue;
     const pts = limbPoints(tg.kind);
-    const hit = pts.some(p => Math.hypot(p.x-tg.x, p.y-tg.y) < tg.r);
+    const hit = pts.some(p => Math.hypot(p.x-tg.x, p.y-tg.y) < tg.r*judgeHit());
     // 「かすめた だけ」では なく、すこし とどめたら せいこう（はやい 端末 でも おなじ）
     if(hit){
       tg.hold += dt;
@@ -2070,7 +2253,7 @@ function catchTick(dt){
     if(it.gone){ it.pop = Math.max(0, it.pop - dt*3); continue; }
     it.y += it.vy*dt;
     it.rot += it.spin*dt;
-    const grab = Math.max(it.r*1.15, catchBand().u * L.cR);
+    const grab = Math.max(it.r*1.15, catchBand().u * L.cR) * judgeHit();
     for(const h of hands){
       if(Math.hypot(h.x-it.x, h.y-it.y) < grab){
         it.got=true; it.pop=1; catchResolve(it, true); break;
@@ -2099,7 +2282,7 @@ function drawFruits(){
   // て の いち を わかりやすく ひからせる
   if(G.judgeOn && G.body){
     const u=G.body.unit, L=catchLevel();
-    const gr = Math.max(u*L.cR, Math.min(CW,CH)*0.05);
+    const gr = Math.max(u*L.cR, Math.min(CW,CH)*0.05) * judgeHit();
     for(const i of [15,16]){
       if(!G.body.vis(i)) continue;
       const h=G.body.P[i];
@@ -2659,8 +2842,8 @@ function drawHint(c,F,s,accent,t){
   }
   c.restore();
 }
-function drawChar(x,y,s,pose,mood,pop,bp){
-  const t=now(), c=ctx;
+function drawChar(x,y,s,pose,mood,pop,bp,cc){
+  const t=now(), c=cc||ctx;      // cc … ずかん など べつ の キャンバス に かく とき
   // まちの あいだも「つぎの ポーズ」の いろ にして、いろ でも よこく する
   const accent=((POSES[pose] || G.pose || {}).color) || '#f08a24';
   const DARK='#2b2340', EDGE='#ffffff';
@@ -3060,6 +3243,8 @@ async function beginGame(withCamera){
   $('#resultScreen').classList.add('hidden');
   G.judgeOn = lastWithCamera;
   G.running = true; G.stars=0; G.combo=0; G.plays=0; G.log=[]; G.bag=null;
+  G.prog = progList(); G.prog = G.prog ? G.prog.slice() : null;   // とちゅう で かえても この かい は そのまま
+  G.total = G.prog ? G.prog.length : SET.rounds;
   G.mood='normal'; G.result=null; G.phase='ready';
   clearPause(); setKeep(false); $('#settings').classList.remove('open');
   elBig.classList.remove('show'); elBig.textContent=''; clearChant(); setDots(0,0);
@@ -3067,7 +3252,7 @@ async function beginGame(withCamera){
   T.targets=[]; T.nextAt = now() + 1.2;          // タッチモード の まと を リセット
   C.items=[]; C.spawned=0; C.done=0; C.nextAt = now() + 1.4;   // キャッチモード を リセット
   elStar.textContent='0';
-  elRound.textContent = '1 / '+SET.rounds;
+  elRound.textContent = '1 / '+G.total;
   // タッチモード は まと を タップ しても こたえられる（カメラなし の とき）
   elDone.style.display = (lastWithCamera || SET.mode!=='mimic') ? 'none' : 'block';
   if(SET.mode==='catch'){
@@ -3093,7 +3278,7 @@ async function beginGame(withCamera){
     mimic:'リズムに あわせて まねっこ しよう！',
     touch:'でてきた まと に タッチ しよう！',
     catch:'おちてくる フルーツ を キャッチ しよう！' };
-  speak(SET.rounds+'かい、がんばろう！ '+(START_SAY[SET.mode]||START_SAY.mimic), 1.0, 1.25);
+  speak(G.total+'かい、がんばろう！ '+(START_SAY[SET.mode]||START_SAY.mimic), 1.0, 1.25);
 }
 
 /* ---- おしまい：なんかい できたか を みせる ---- */
@@ -3103,7 +3288,7 @@ function showSummary(){
   $('#settings').classList.remove('open');
   clearChant(); setDots(0,0); elBig.classList.remove('show');
 
-  const n = G.log.filter(r=>r.ok).length, total = G.log.length || SET.rounds;
+  const n = G.log.filter(r=>r.ok).length, total = G.log.length || G.total || SET.rounds;
   $('#rNum').textContent = n;
   $('#rTotal').textContent = total;
 
@@ -3217,6 +3402,11 @@ function paintLevels(){
   $('#touchOpt').style.display = (SET.mode==='touch') ? '' : 'none';
   $('#catchOpt').style.display = (SET.mode==='catch') ? '' : 'none';
   $('#startSub').innerHTML = (MODES[SET.mode]||MODES.mimic).sub;
+  const mim = SET.mode==='mimic';
+  $('#mimicTools').style.display = mim ? '' : 'none';
+  $('#orderCol').style.display = mim ? '' : 'none';
+  if(mim) paintOrder(); else $('#roundsCol').style.display='';
+  paintJudge();
   const L=LEVELS[SET.level];
   if(!L) return;
   if(SET.mode==='touch'){
@@ -3228,7 +3418,23 @@ function paintLevels(){
   }else{
     $('#levelNote').textContent = L.note;
   }
+
 }
+function buildJudge(box){
+  box.innerHTML='';
+  for(const k of Object.keys(JUDGE)){
+    const b=document.createElement('button'); b.textContent=JUDGE[k].label; b.dataset.j=k;
+    b.addEventListener('click',()=>{ SET.judgeBy[SET.mode]=k; refreshTol(); saveSet(); paintLevels(); });
+    box.appendChild(b);
+  }
+}
+function paintJudge(){
+  const k=judgeKey();
+  for(const box of document.querySelectorAll('.judgesel'))
+    [...box.children].forEach(b=>b.classList.toggle('on', b.dataset.j===k));
+  const jm=$('#judgeMode'); if(jm) jm.textContent=(MODES[SET.mode]||MODES.mimic).name;
+}
+buildJudge($('#judgeSel')); buildJudge($('#segJudge'));
 paintLevels();
 
 $('#startBtn').addEventListener('click', ()=>{
@@ -3307,7 +3513,6 @@ function segInit(sel, key, cast, isLevelPart){
   segPaint.push(paint); paint();
 }
 segInit('#segWait','waitBeats', v=>parseInt(v,10), true);
-segInit('#segTol','tol', v=>parseFloat(v), true);
 segInit('#segRounds','rounds', v=>parseInt(v,10), false);
 
 // せってい がめん の むずかしさ ボタン
@@ -3380,6 +3585,242 @@ mt.addEventListener('click',()=>{
 });
 
 resize();
+
+/* =========================================================================
+   16. ポーズずかん ／ じゅんばん を つくる
+   ========================================================================= */
+const LV_NAME = {1:'かんたん', 2:'ふつう', 3:'むずかしい'};
+const lvStars = n => '★'.repeat(n);
+const poseTag = id => POSES[id].legs ? '🧍 たって' : '🪑 すわっても OK';
+// ★ で しぼりこむ（0 は ぜんぶ）
+function posesOfLv(lv){ return POSE_IDS.filter(id=> !lv || POSES[id].lv===lv); }
+function makeLvTabs(box, cur, onPick){
+  box.innerHTML='';
+  [[0,'ぜんぶ'],[1,'★ かんたん'],[2,'★★ ふつう'],[3,'★★★ むずかしい']].forEach(([v,lab])=>{
+    const b=document.createElement('button');
+    b.textContent=lab+'（'+posesOfLv(v).length+'）'; b.dataset.v=v;
+    b.className = (v===cur?'on':'') + (v?' lv'+v:'');
+    b.addEventListener('click',()=>onPick(v));
+    box.appendChild(b);
+  });
+}
+// ちいさな キャンバス に お手本 を うごかして かく
+const MINI = [];               // {cv, id, big}
+function miniCanvas(id, w, h, big){
+  const c=document.createElement('canvas');
+  c.width=Math.round(w*DPR); c.height=Math.round(h*DPR);
+  c.style.width=w+'px'; c.style.height=h+'px';
+  const m={cv:c, id, w, h, big:!!big}; MINI.push(m); c._m=m;
+  return c;
+}
+function drawMinis(){
+  const t=now(), bp=(t*1.6)%1;
+  for(let k=MINI.length-1;k>=0;k--){
+    const m=MINI[k];
+    if(!m.cv.isConnected){ MINI.splice(k,1); continue; }
+    const r=m.cv.getBoundingClientRect();
+    if(r.bottom<0 || r.top>innerHeight) continue;            // みえない ものは かかない
+    const g=m.cv.getContext('2d');
+    g.setTransform(DPR,0,0,DPR,0,0); g.clearRect(0,0,m.w,m.h);
+    const s=Math.min(m.h/1.85, m.w/1.95);
+    drawChar(m.w/2, m.h*0.555, s, m.id, 'normal', 0, bp, g);
+  }
+}
+let toolsRaf=0;
+function toolsLoop(){
+  if(!$('#zukan').classList.contains('hidden') || !$('#builder').classList.contains('hidden')
+     || $('#poseView').classList.contains('open')){
+    drawMinis(); toolsRaf=requestAnimationFrame(toolsLoop);
+  }else toolsRaf=0;
+}
+function startToolsLoop(){ if(!toolsRaf) toolsRaf=requestAnimationFrame(toolsLoop); }
+
+/* ---- ずかん ---- */
+let zukanLv=0;
+function openZukan(){
+  $('#zukan').classList.remove('hidden');
+  if(G.running) pauseGame('settings');
+  paintZukan(); startToolsLoop();
+}
+function closeZukan(){
+  $('#zukan').classList.add('hidden');
+  if(!$('#settings').classList.contains('open') && PAUSE.on && PAUSE.why==='settings') resumeGame();
+}
+function paintZukan(){
+  makeLvTabs($('#zkTabs'), zukanLv, v=>{ zukanLv=v; paintZukan(); });
+  const L=LEVELS[SET.level];
+  $('#zkNow').textContent = 'いまの はんてい：'+(L ? L.label : '🛠 じぶん ごのみ')
+    + '（★ は ポーズ その もの の むずかしさ です）';
+  const grid=$('#zkGrid'); grid.innerHTML='';
+  for(const id of posesOfLv(zukanLv)){
+    const P=POSES[id];
+    const card=document.createElement('button'); card.className='zcard lv'+P.lv;
+    card.appendChild(miniCanvas(id, 150, 150));
+    const nm=document.createElement('b'); nm.textContent=P.emoji+' '+P.name; card.appendChild(nm);
+    const st=document.createElement('span'); st.className='zstar'; st.textContent=lvStars(P.lv); card.appendChild(st);
+    const tg=document.createElement('span'); tg.className='ztag'; tg.textContent=poseTag(id); card.appendChild(tg);
+    card.addEventListener('click',()=>openPoseView(id));
+    grid.appendChild(card);
+  }
+}
+/* ---- 1つ の ポーズ を おおきく みる ---- */
+let viewId=null;
+function openPoseView(id, fromBuilder){
+  viewId=id; const P=POSES[id];
+  const box=$('#pvFig'); box.innerHTML='';
+  box.appendChild(miniCanvas(id, 300, 300, true));
+  $('#pvName').textContent=P.emoji+' '+P.name;
+  $('#pvStar').textContent=lvStars(P.lv)+'　'+LV_NAME[P.lv];
+  $('#pvStar').className='pvstar lv'+P.lv;
+  $('#pvHint').textContent=P.hint;
+  $('#pvChant').textContent='かけごえ：「'+P.chant.join('・')+'」';
+  $('#pvTag').textContent=poseTag(id) + (P.instant ? '　／　いっしゅん で OK' : '');
+  $('#pvAdd').style.display = fromBuilder ? '' : 'none';
+  $('#poseView').classList.add('open'); startToolsLoop();
+}
+function closePoseView(){ $('#poseView').classList.remove('open'); }
+$('#pvClose').addEventListener('click', closePoseView);
+$('#poseView').addEventListener('click', e=>{ if(e.target.id==='poseView') closePoseView(); });
+$('#pvSay').addEventListener('click', ()=>{ warmUpSpeech(); if(viewId) speak(POSES[viewId].call, 1.0, 1.25); });
+$('#pvAdd').addEventListener('click', ()=>{ if(viewId) progAdd(viewId); closePoseView(); });
+$('#zkClose').addEventListener('click', closeZukan);
+
+/* ---- じゅんばん（プログラム） ---- */
+const PROG_MAX = 20;
+function progOf(slot){
+  if(!SET.programs) SET.programs={A:[],B:[],C:[]};
+  if(!SET.programs[slot]) SET.programs[slot]=[];
+  const q=SET.programs[slot];
+  for(let i=q.length-1;i>=0;i--) if(!POSES[q[i]]) q.splice(i,1);   // おなじ はいれつ の まま なおす
+  return SET.programs[slot];
+}
+// あそぶ ときに つかう じゅんばん（おまかせ の ときは null）
+function progList(){
+  if(SET.mode!=='mimic' || SET.order!=='program') return null;
+  const p=progOf(SET.progSlot||'A');
+  return p.length ? p : null;
+}
+function totalRounds(){ const p=progList(); return p ? p.length : SET.rounds; }
+
+let bLv=0, bSel=-1;
+function openBuilder(){
+  $('#builder').classList.remove('hidden');
+  if(G.running) pauseGame('settings');
+  if(!SET.progSlot) SET.progSlot='A';
+  bSel=-1; paintBuilder(); startToolsLoop();
+}
+function closeBuilder(){
+  $('#builder').classList.add('hidden');
+  paintLevels();
+  if(!$('#settings').classList.contains('open') && PAUSE.on && PAUSE.why==='settings') resumeGame();
+}
+function progAdd(id){
+  const p=progOf(SET.progSlot);
+  if(p.length>=PROG_MAX){ toastB('いちどに '+PROG_MAX+'こ までです'); return; }
+  if(bSel>=0 && bSel<p.length){ p.splice(bSel+1,0,id); bSel++; }   // えらんで いる ところ の うしろ に
+  else p.push(id);
+  saveSet(); paintBuilder();
+  const seq=$('#bSeq'); seq.scrollLeft=seq.scrollWidth;
+}
+function toastB(msg){
+  const el=$('#bToast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastB._t); toastB._t=setTimeout(()=>el.classList.remove('show'),1800);
+}
+function paintBuilder(){
+  const slot=SET.progSlot, p=progOf(slot);
+  // プログラム A／B／C
+  const tabs=$('#bSlots'); tabs.innerHTML='';
+  for(const k of ['A','B','C']){
+    const b=document.createElement('button');
+    b.textContent='じゅんばん '+k+'（'+progOf(k).length+'こ）'; b.className=(k===slot?'on':'');
+    b.addEventListener('click',()=>{ SET.progSlot=k; bSel=-1; saveSet(); paintBuilder(); });
+    tabs.appendChild(b);
+  }
+  // ならび
+  const seq=$('#bSeq'); seq.innerHTML='';
+  if(!p.length){
+    const e=document.createElement('p'); e.className='bempty';
+    e.textContent='したの ポーズを おすと、ここに じゅんばんに ならびます';
+    seq.appendChild(e);
+  }
+  p.forEach((id,i)=>{
+    const P=POSES[id];
+    const tile=document.createElement('div'); tile.className='btile lv'+P.lv+(i===bSel?' sel':'');
+    tile.innerHTML='<span class="bno">'+(i+1)+'</span><span class="bem">'+P.emoji+'</span><span class="bnm">'+P.name+'</span>';
+    const ctl=document.createElement('div'); ctl.className='bctl';
+    const mk=(lab,title,fn,dis)=>{ const b=document.createElement('button'); b.textContent=lab; b.title=title; b.disabled=!!dis;
+      b.addEventListener('click',e=>{ e.stopPropagation(); fn(); saveSet(); paintBuilder(); }); ctl.appendChild(b); };
+    mk('◀','まえへ',()=>{ [p[i-1],p[i]]=[p[i],p[i-1]]; bSel=i-1; }, i===0);
+    mk('✕','けす',()=>{ p.splice(i,1); bSel=-1; });
+    mk('▶','うしろへ',()=>{ [p[i+1],p[i]]=[p[i],p[i+1]]; bSel=i+1; }, i===p.length-1);
+    tile.appendChild(ctl);
+    tile.addEventListener('click',()=>{ bSel = (bSel===i ? -1 : i); paintBuilder(); });
+    seq.appendChild(tile);
+  });
+  $('#bCount').textContent = p.length+'こ（'+p.length+'かい あそびます）';
+  $('#bSelNote').textContent = bSel>=0 ? (bSel+1)+'ばんめ の うしろに いれます（もういちど おすと もとに もどります）'
+                                       : 'ポーズを おすと さいごに たします';
+  const legs=p.filter(id=>POSES[id].legs).length;
+  $('#bWarn').textContent = legs ? '🧍 たって あそぶ ポーズが '+legs+'こ はいって います（ひざや あしが うつる ばしょで）' : '';
+  // ポーズ の パレット
+  makeLvTabs($('#bTabs'), bLv, v=>{ bLv=v; paintBuilder(); });
+  const pal=$('#bPal'); pal.innerHTML='';
+  for(const id of posesOfLv(bLv)){
+    const P=POSES[id];
+    const w=document.createElement('div'); w.className='bpose lv'+P.lv;
+    const add=document.createElement('button'); add.className='badd';
+    add.appendChild(miniCanvas(id, 84, 84));
+    const t=document.createElement('span'); t.innerHTML='<b>'+P.emoji+' '+P.name+'</b><i>'+lvStars(P.lv)+'</i>';
+    add.appendChild(t);
+    add.addEventListener('click',()=>progAdd(id));
+    const look=document.createElement('button'); look.className='blook'; look.textContent='👀'; look.title='おおきく みる';
+    look.addEventListener('click',()=>openPoseView(id,true));
+    w.appendChild(add); w.appendChild(look); pal.appendChild(w);
+  }
+  // いま どちら で あそぶか
+  const useP = SET.order==='program';
+  $('#bUse').textContent = useP && SET.progSlot===slot ? '✓ この じゅんばんで あそぶ（えらばれて います）' : '▶ この じゅんばんで あそぶ';
+  $('#bUse').classList.toggle('on', useP && SET.progSlot===slot);
+}
+$('#bFill').addEventListener('click',()=>{
+  // おまかせ：いま の ★ の なかから、なるべく かぶらない ように 10こ
+  const src=posesOfLv(bLv).filter(id=>!POSES[id].legs || bLv===3 || Math.random()<0.5);
+  const pool=src.length?src:posesOfLv(bLv), out=[];
+  while(out.length<10){
+    const bag=pool.slice().sort(()=>Math.random()-0.5);
+    for(const id of bag){ if(out.length<10 && id!==out[out.length-1]) out.push(id); }
+  }
+  SET.programs[SET.progSlot]=out; bSel=-1; saveSet(); paintBuilder();
+});
+$('#bClear').addEventListener('click',()=>{
+  if(!progOf(SET.progSlot).length) return;
+  if(!confirm('じゅんばん '+SET.progSlot+' を ぜんぶ けしますか？')) return;
+  SET.programs[SET.progSlot]=[]; bSel=-1; saveSet(); paintBuilder();
+});
+$('#bUse').addEventListener('click',()=>{
+  if(!progOf(SET.progSlot).length){ toastB('さきに ポーズを いれてね'); return; }
+  SET.order='program'; SET.mode='mimic'; saveSet(); closeBuilder();
+});
+$('#bClose').addEventListener('click', closeBuilder);
+
+/* ---- スタート がめん・せってい から ひらく ---- */
+function paintOrder(){
+  const box=$('#orderSel'); if(!box) return;
+  [...box.children].forEach(b=>b.classList.toggle('on', b.dataset.o===(SET.order||'random')));
+  const p=progList();
+  $('#orderNote').textContent = p ? 'じゅんばん '+SET.progSlot+'：'+p.length+'こ（'+p.length+'かい）'
+                                  : (SET.order==='program' ? 'じゅんばんが からっぽ なので おまかせ に なります' : 'えらんだ ポーズから なるべく かぶらずに');
+  $('#roundsCol').style.display = p ? 'none' : '';
+}
+$('#orderSel').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+  if(b.dataset.o==='program' && !progOf(SET.progSlot||'A').length){ SET.order='program'; saveSet(); openBuilder(); return; }
+  SET.order=b.dataset.o; saveSet(); paintLevels();
+}));
+$('#openZukan').addEventListener('click', openZukan);
+$('#openBuilder').addEventListener('click', openBuilder);
+$('#setZukan').addEventListener('click', openZukan);
+$('#setBuilder').addEventListener('click', openBuilder);
+paintLevels();
 </script>
 </body>
 </html>
